@@ -1,6 +1,6 @@
 class RegistrationController < ApplicationController
   def create
-    @user = RegistersUser.call(params[:username], user_creator: User)
+    @user = RegistersUser.call(params[:username])
     render json: @user
   end
 end
