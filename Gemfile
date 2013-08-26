@@ -32,8 +32,10 @@ group :doc do
   gem 'sdoc', require: false
 end
 
-gem 'rspec-rails'
-gem 'mocha', require: 'mocha/api'
+group :development, :test do
+  gem 'rspec-rails', '~> 2.0', require: 'rspec/rails'
+  gem 'mocha', require: 'mocha/api'
+end
 
 # Use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'

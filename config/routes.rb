@@ -13,6 +13,7 @@ Register::Application.routes.draw do
 
   # Example resource route (maps HTTP verbs to controller actions automatically):
   #   resources :products
+  get 'registration' => 'registration#create'
 
   # Example resource route with options:
   #   resources :products do
@@ -39,7 +40,7 @@ Register::Application.routes.draw do
   #       get 'recent', on: :collection
   #     end
   #   end
-  
+
   # Example resource route with concerns:
   #   concern :toggleable do
   #     post 'toggle'

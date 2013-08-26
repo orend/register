@@ -128,7 +128,7 @@ DEPENDENCIES
   jquery-rails
   mocha
   rails (= 4.0.0)
-  rspec-rails
+  rspec-rails (~> 2.0)
   sass-rails (~> 4.0.0)
   sdoc
   sqlite3
