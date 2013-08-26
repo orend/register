@@ -1,6 +1,6 @@
 class RegistersUser
-  def register(params)
-    username = params.fetch(:username)
-    User.find_or_create_by(username: username)
+  def register(username, options)
+    user_creator = options.fetch(:user_creator)
+    user_creator.find_or_create_by(username: username)
   end
 end
