@@ -1,4 +1,5 @@
-require 'spec_helper'
+require 'spec_unit_helper'
+require "./app/services/registers_user"
 
 describe RegistersUser do
   let(:user_creator) { double('user_creator') }
