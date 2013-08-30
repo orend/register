@@ -5,10 +5,10 @@ describe RegistersUser do
   let(:user_creator) { double('user_creator') }
   let(:notifies_user) { double('notifies_user') }
   let(:user) { double('user') }
-  subject(:registers_user) { RegistersUser.new }
+  subject(:registers_user) { RegistersUser }
 
   it 'registers a new user' do
-  	expect(notifies_user).to receive(:call)#.and_return(notifies_user)
+  	expect(notifies_user).to receive(:call)
   	expect(user_creator).to receive(:find_or_create_by)
   			.with(username: 'username').and_return(user)
     registers_user.(username: 'username', user_creator: user_creator,

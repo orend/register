@@ -1,5 +1,5 @@
 class RegistersUser
-  def call(params = {})
+  def self.call(params = {})
     username = params.fetch(:username)
     user_creator = params.fetch(:user_creator) { User }
     notifies_user = params.fetch(:notifies_user) { NotifiesUser }
@@ -10,6 +10,6 @@ class RegistersUser
 
   private
 
-  def do_more_things_with(user)
+  def self.do_more_things_with(user)
   end
 end
