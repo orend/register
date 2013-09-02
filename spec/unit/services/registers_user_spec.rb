@@ -8,9 +8,9 @@ describe RegistersUser do
   subject(:registers_user) { RegistersUser }
 
   it 'registers a new user' do
-  	expect(notifies_user).to receive(:call)
   	expect(user_creator).to receive(:find_or_create_by)
   			.with(username: 'username').and_return(user)
+  	expect(notifies_user).to receive(:call).with(user)
 
     registers_user.(username: 'username', user_creator: user_creator,
     	notifies_user: notifies_user)
