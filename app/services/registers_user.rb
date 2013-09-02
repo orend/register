@@ -7,9 +7,4 @@ class RegistersUser
       notifies_user.(user)
     end
   end
-
-  private
-
-  def self.do_more_things_with(user)
-  end
 end
