@@ -13,7 +13,7 @@ Register::Application.routes.draw do
 
   # Example resource route (maps HTTP verbs to controller actions automatically):
   #   resources :products
-  get 'registration' => 'registration#create'
+  get 'email_list' => 'email_list#create'
 
   # Example resource route with options:
   #   resources :products do
