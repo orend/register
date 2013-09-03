@@ -82,11 +82,11 @@ class AddsUserToList
   end
 end
 ```
-Good, we can now pass any class that craetes a user and any class that notifies a user, which means testing will be easier but more importantly that relacing, say, an email notifier with a SMS notifier will just be a matter of passing a different object to our service object. Since we suplied reasonable defaults we don't need to pass these dependencies at all, and the controller stays unchanged.
+Good, we can now pass any class that creates a user and any class that notifies a user, which means testing will be easier but more importantly that replacing, say, an email notifier with a SMS notifier will just be a matter of passing a different object to our service object. Since we supplied reasonable defaults we don't need to pass these dependencies at all, and the controller stays unchanged.
 
-That's almost perfect, but we still have one more thing to improve. We are still littering the service object with an active record class, which means that our unit tests will have to load activce record and the entire rails stack. This can be very slow depending on the dependencies of your app. Ideally the unit tests should be able to run without loading rails or your app.
+That's almost perfect, but we still have one more thing to improve. We are still littering the service object with an active record class, which means that our unit tests will have to load active record and the entire rails stack. This can be very slow depending on the dependencies of your app. Ideally the unit tests should be able to run without loading rails or your app.
 
-But how can we both give reasonable defaults and make sure no active record object is getting loaded? *deferred evaluation* to the rescue. We will use ```Hash#fetch``` which receives a block that is not evaluted unless the queried key is not present.
+But how can we both give reasonable defaults and make sure no active record object is getting loaded? *deferred evaluation* to the rescue. We will use ```Hash#fetch``` which receives a block that is not evaluated unless the queried key is not present.
 
 Another comment, when my classes contain only one public method I don't like calling it 'run', 'do' or 'perform' since these names don't convey a lot of information. In this case I'd rather call it 'call' and use ruby's shorthand notation for invoking this method. A nice bonus is being able to pass in a proc instead of the class itself if I need it. The end result looks like this:
 
