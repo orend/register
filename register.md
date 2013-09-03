@@ -2,7 +2,7 @@ Suppose you have a controller that's responsible for handling users signing up t
 Fat Controller
 --------------
 
-```
+```ruby
 class EmailListController < ApplicationController
   def create
     @user = User.find_or_create_by(username: params[:username]).tap do |user|
@@ -18,7 +18,7 @@ Fat Model
 --------------
 The logic in this controller is pretty simple, but it's still too much for a controller and should be extracted out. But where to? The word 'user' that can be found in almost every line here might suggest that we push it to the ```User``` model. Let's try this:
 
-```
+```ruby
 class EmailListController < ApplicationController
   def create
     @user = User.addToEmailList(params[:username], 'blog_list')
@@ -27,7 +27,7 @@ class EmailListController < ApplicationController
 end
 
 ```
-```
+```ruby
 class User < ActiveRecord::Base
   validates_uniqueness_of :username
   
@@ -47,7 +47,7 @@ The second problem is that business logic in active record classes are a pain to
 
 Now, if the code above was the entire ```User``` class and my application was small and simple I'd be perfectly happy with leaving ```User#addToEmailList``` as is. But more complex rails apps that are not groomed often enough tend to have large 'god classes' such as ```User``` or ```Order``` that attract every piece of logic that even touches these classes, which makes these kind of apps very hard to maintain. This is when introducing a service object is useful:
 
-```
+```ruby
 class EmailListController < ApplicationController
   def create
     @user = AddsUserToList.run(params[:username], 'blog_list')
@@ -55,7 +55,7 @@ class EmailListController < ApplicationController
   end
 end
 ```
-```
+```ruby
 class AddsUserToList
   def self.call(username, email_list_name)
     User.find_or_create_by(username: username).tap do |user|
@@ -71,7 +71,7 @@ This is an improvement, but testing this service object would require us to some
 
 The most straight forward way to decouple these classes is to inject the dependencies of ```AddsUserToList```:
 
-```
+```ruby
 class AddsUserToList
   def self.call(username, email_list_name, creates_user = User, notifies_user = NotifiesUser)
 
@@ -94,7 +94,7 @@ Further Decouple from ActiveRecord
 --------------------------
 Before:
 
-```
+```ruby
 class EmailListController < ApplicationController
   def create
     @user = User.find_or_create_by(username: params[:username]).tap do |user|
@@ -108,7 +108,7 @@ end
 ```
 After:
 
-```
+```ruby
 class EmailListController < ApplicationController
   def create
     @user = AddsUserToList.(params[:username], 'blog_list')
@@ -117,7 +117,7 @@ class EmailListController < ApplicationController
 end
 
 ```
-```
+```ruby
 class AddsUserToList
   def self.call(username, email_list_name, params = {})
     creates_user = params.fetch(:creates_user) { User }
