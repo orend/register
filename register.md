@@ -135,7 +135,7 @@ class AddsUserToList
 end
 ```
 
-```AddsUserToList``` can be tested using *true* unit tests: we can easily isolate the class under test and make sure it properly communicates with its collaborators. There is no database access, no heavy handed request stubbing and if we want to - no loading of the rails stack. In fact, I'd argue that any test that requires any of the above is not a unit test, but rather an integration test.
+```AddsUserToList``` can be tested using *true* unit tests: we can easily isolate the class under test and make sure it properly communicates with its collaborators. There is no database access, no heavy handed request stubbing and if we want to - no loading of the rails stack. In fact, I'd argue that any test that requires any of the above is not a unit test, but rather an integration test (see the entire repo [here](https://github.com/orend/register) ).
 
 ```ruby
 describe AddsUserToList do
