@@ -34,7 +34,6 @@ end
 
 group :development, :test do
   gem 'rspec-rails', '~> 2.0', require: 'rspec/rails'
-  gem 'mocha', require: 'mocha/api'
 end
 
 # Use ActiveModel has_secure_password
