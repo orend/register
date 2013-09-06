@@ -138,3 +138,4 @@ end
 Conclusion
 ----------
 
+The 'Before' version is harder to test and is sugnificantly slower. It also couples many responsibiilties into a single class, the Controller class. The newer version is easier to test (we can easily pass mock instead of using the default class - ```User``` and ```). The other side of that coin is that in ```AddsUserToList``` we can easily replace the collaborators with others if we need to. The controller has been reduced to performing the most basic task of collecting input and invoking the correct mehtods to excercise here.
