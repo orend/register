@@ -156,7 +156,9 @@ describe AddsUserToList do
 end
 ```
 
-As you can see the test code is very similar to the the implementation code here. This is not surprising. A unit test should verify that the object under test sends the correct messages to its collaborators, and in the case of ```AddsUserToList``` we have a controller-like object, and a controller's job is to... coordinate sending messages between collaborators.
+As you can see the test code is very similar to the the implementation code here. This is not surprising. A unit test should verify that the object under test sends the correct messages to its collaborators, and in the case of ```AddsUserToList``` we have a controller-like object, and a controller's job is to... coordinate sending messages between collaborators.[^1]
+
+[^1]: Sandi Metz talks about what you shuold and what you shuold not test in this (http://www.confreaks.com/videos/2452-railsconf2013-the-magic-tricks-of-testing) talk. To use her vocabulary, all we are testing here is outgoing command messages since this are the only messages this object sends.
 
 Conclusion
 ----------
