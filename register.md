@@ -41,7 +41,7 @@ class User < ActiveRecord::Base
   end
 end
 ```
-Service Object
+Extact Service Object
 --------------
 This is better, as the ```User``` class is now responsible for creating and updating users, but there are still a few problems. The first one is that now ```User``` is handling mailing list additions, as well as notifying the user about this. This is too many responsibilities for one class. Having an active record object handle anything more than CRUD and associations is a violation of the Single Responsibility Principle.
 
@@ -67,7 +67,7 @@ class AddsUserToList
   end
 end
 ```
-Dependency Injection
+Inject Dependencies
 --------------
 
 We created a plain ruby object, ```AddsUserToList```, which contains the business logic from before. In the controller we call this object and not ```User``` directly.
