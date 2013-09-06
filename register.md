@@ -18,7 +18,7 @@ We first find the user or create it if it doesn't exist. Then we notify the user
 
 Fat Model
 --------------
-The logic in this controller is pretty simple, but it's still too much for a controller and should be extracted out. But where to? The word 'user' that can be found in almost every line here might suggest that we push it to the ```User``` model. Let's try this:
+The logic in this controller is pretty simple, but it's still too much for a controller and should be extracted out. But where to? The word 'user' that can be found in almost every line here might suggest that we should push it to the ```User``` model. Let's try this:
 
 ```ruby
 class EmailListController < ApplicationController
@@ -32,7 +32,7 @@ end
 ```ruby
 class User < ActiveRecord::Base
   validates_uniqueness_of :username
-  
+
   def self.addToEmailList(username, email_list_name)
   	User.find_or_create_by(username: username).tap do |user|
       NotifiesUser.run(user, 'blog_list')
@@ -43,11 +43,11 @@ end
 ```
 Service Object
 --------------
-This is better, the ```User``` class knows better about creating and updating users, but there are still a few problems. The first one is that having ```User``` handle mailing list additions, and specifically notifying the user about this with ```NotifiesUser```. In fact, having an active record object handle anything more than CRUD and associations is a violation of the Single Responsibility Principle.
+This is better, as the ```User``` class is now responsible for creating and updating users, but there are still a few problems. The first one is that now ```User``` is handling mailing list additions, as well as notifying the user about this. This is too many responsibilities for one class. Having an active record object handle anything more than CRUD and associations is a violation of the Single Responsibility Principle.
 
-The second problem is that business logic in active record classes are a pain to unit test. You often need factories or to heavily stub out methods of the object under test (don't do that), stub all instances of the class under test (don't do that either) or hit the database in your unit tests (please don't). As a result testing active record objects can be very slow, sometimes orders of magnitude slower than testing plain ruby objects.
+The second problem is that business logic in active record classes is a pain to unit test. You often need to use factories or to heavily stub out methods of the object under test (don't do that), stub all instances of the class under test (don't do that either) or hit the database in your unit tests (please don't). As a result testing active record objects can be very slow, sometimes orders of magnitude slower than testing plain ruby objects.
 
-Now, if the code above was the entire ```User``` class and my application was small and simple I'd be perfectly happy with leaving ```User#addToEmailList``` as is. But more complex rails apps that are not groomed often enough tend to have large 'god classes' such as ```User``` or ```Order``` that attract every piece of logic that even touches these classes, which makes these kind of apps very hard to maintain. This is when introducing a service object is useful:
+Now, if the code above was the entire ```User``` class and my application was small and simple I'd be perfectly happy with leaving ```User#addToEmailList``` as is. But more complex rails apps that are not groomed often enough tend to have large 'god classes' such as ```User``` or ```Order``` that attract every piece of logic that touches the model. Slow tests make an app harder to maintain and harder to work with. This is when introducing a service object is useful:
 
 ```ruby
 class EmailListController < ApplicationController
@@ -69,13 +69,15 @@ end
 ```
 Dependency Injection
 --------------
-This is an improvement, but testing this service object would require us to somehow stub ```User#find_or_create_by``` to avoid hitting the database, and probably also stub out ```NotifiesUser#run``` in order to avoid sending a real notification out. Anyway, hard coding the name of the class of your collaborator is a really bad idea since it couples your class and your collaborators forever. 
+
+We created a plain ruby object, ```AddsUserToList```, which contains the business logic from before. In the controller we call this object and not ```User``` directly.
+This is an improvement, but testing this service object would require us to somehow stub ```User#find_or_create_by``` to avoid hitting the database, and probably also stub out ```NotifiesUser#run``` in order to avoid sending a real notification out. Anyway, hard coding the name of the class of your collaborator is a really bad idea since it couples your class with your collaborators forever.
 
 The most straight forward way to decouple these classes is to inject the dependencies of ```AddsUserToList```:
 
 ```ruby
 class AddsUserToList
-  def self.call(username, email_list_name, creates_user = User, notifies_user = NotifiesUser)
+  def self.run(username, email_list_name, creates_user = User, notifies_user = NotifiesUser)
 
     creates_user.find_or_create_by(username: username).tap do |user|
       notifies_user.(user, email_list_name)
@@ -84,7 +86,7 @@ class AddsUserToList
   end
 end
 ```
-Good, we can now pass any class that creates a user and any class that notifies a user, which means testing will be easier but more importantly that replacing, say, an email notifier with a SMS notifier will just be a matter of passing a different object to our service object. Since we supplied reasonable defaults we don't need to pass these dependencies at all, and the controller stays unchanged.
+Good, we can now pass any class that creates a user and any class that notifies a user, which means testing will be easier, but more importantly, that replacing, say, an email notifier with a SMS notifier will just be a matter of passing a different object to our service object. Since we supplied reasonable defaults we don't need to pass these dependencies at all, and the controller stays unchanged.
 
 That's almost perfect, but we still have one more thing to improve. We are still littering the service object with an active record class, which means that our unit tests will have to load active record and the entire rails stack. This can be very slow depending on the dependencies of your app. Ideally the unit tests should be able to run without loading rails or your app.
 
@@ -100,7 +102,7 @@ Before:
 class EmailListController < ApplicationController
   def create
     @user = User.find_or_create_by(username: params[:username]).tap do |user|
-      NotifiesUser.run(user, 'blog_list')
+      NotifiesUser.(user, 'blog_list')
       user.update_attributes(email_list_name: 'blog_list')
     end
     render json: @user
@@ -132,3 +134,7 @@ class AddsUserToList
   end
 end
 ```
+
+Conclusion
+----------
+
