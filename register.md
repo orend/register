@@ -135,7 +135,33 @@ class AddsUserToList
 end
 ```
 
+```AddsUserToList``` can be tested using *true* unit tests: we can easily isolate the class under test and make sure it properly communicates with its collaborators. There is no database access, no heavy handed request stubbing and if we want to - no loading of the rails stack. In fact, I'd argue that any test that requires any of the above is not a unit test, but rather an integration test.
+
+```ruby
+describe AddsUserToList do
+  let(:creates_user) { double('creates_user') }
+  let(:notifies_user) { double('notifies_user') }
+  let(:user) { double('user') }
+  subject(:adds_user_to_list) { AddsUserToList }
+
+  it 'registers a new user' do
+    expect(creates_user).to receive(:find_or_create_by)
+        .with(username: 'username').and_return(user)
+    expect(notifies_user).to receive(:call).with(user, 'list_name')
+    expect(user).to receive(:update_attributes).with(email_list_name: 'list_name')
+
+    adds_user_to_list.('username', 'list_name', creates_user: creates_user,
+      notifies_user: notifies_user)
+  end
+end
+```
+
 Conclusion
 ----------
 
-The 'Before' version is harder to test and is sugnificantly slower. It also couples many responsibiilties into a single class, the Controller class. The newer version is easier to test (we can easily pass mock instead of using the default class - ```User```). The other side of that coin is that in ```AddsUserToList``` we can easily replace the collaborators with others if we need to. The controller has been reduced to performing the most basic task of collecting input and invoking the correct mehtods to excercise here.
+The 'Before' version's tests are harder to write and are sugnificantly slower. It also bundles many responsibiilties into a single class, the Controller class. The 'After' version is easier to test (we pass mocks to override the default classes). This means that in our code in ```AddsUserToList``` we can easily replace the collaborators with others if we need to, in case the requirements change. The controller has been reduced to performing the most basic task of collecting input and invoking the correct mehtods to excercise here.
+
+Is the 'After' version better? I think it is. It's easier and faster to test, but even more importantly the collaborators are clearly defined and are treated as *roles*, not as specific implementations. As such, they can always be replaced but different implementations of the role they play. This brings us closer to the goad that Kent Beck states:
+```
+"When you can extend a system solely by adding new objects without modifying any existing objects, then you have a system that is flexible and cheap to maintain."
+```
