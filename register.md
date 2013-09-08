@@ -21,7 +21,7 @@ end
 ```
 We first find the user or create it if it doesn't exist. Then we notify the user it was added to the mailing list via ```NotifiesUser``` (probably asking her to confirm). We update the user record with the name of the mailing list and then render the user as a json.
 
-Extract Logic To A Fat Model
+Extracting Logic to a Fat Model
 --------------
 The logic in this controller is pretty simple, but it's still too much for a controller and should be extracted out. But where to? The word 'user' that can be found in almost every line here might suggest that we should push it to the ```User``` model. Let's try this:
 
@@ -46,7 +46,7 @@ class User < ActiveRecord::Base
   end
 end
 ```
-Extact A Service Object
+Extacting a Service Object
 --------------
 This is better, as the ```User``` class is now responsible for creating and updating users, but there are still a few problems. The first one is that now ```User``` is handling mailing list additions, as well as notifying the user about this. This is too many responsibilities for one class. Having an active record object handle anything more than CRUD and associations is a violation of the Single Responsibility Principle.
 
@@ -72,7 +72,7 @@ class AddsUserToList
   end
 end
 ```
-Inject Dependencies
+Injecting Dependencies
 --------------
 
 We created a plain ruby object, ```AddsUserToList```, which contains the business logic from before. In the controller we call this object and not ```User``` directly.
@@ -93,7 +93,7 @@ end
 ```
 Good, we can now pass any class that creates a user and any class that notifies a user, which means testing will be easier, but more importantly, that replacing, say, an email notifier with a SMS notifier will just be a matter of passing a different object to our service object. Since we supplied reasonable defaults we don't need to pass these dependencies at all, and the controller stays unchanged.
 
-Further Decouple from ActiveRecord
+Further Decoupling from ActiveRecord
 --------------------------
 
 That's almost perfect, but we still have one more thing to improve. We are still littering the service object with references to an active record class, ```User```, which means that our unit tests will have to load active record and the entire rails stack, but even worse - the entire app and its dependencies. This load time can be a few seconds for trivial rails apps, but can grow to 30 seconds for really big rails apps. Unit tests should be *fast* to run as part of your test suite but also fast to run individually, which means they should not load the rails stack or your application (also see [Corey Haines's talk](http://www.youtube.com/watch?v=bNn6M2vqxHE)
@@ -169,6 +169,10 @@ Conclusion
 
 The 'Before' version's tests are harder to write and are sugnificantly slower. It also bundles many responsibiilties into a single class, the Controller class. The 'After' version is easier to test (we pass mocks to override the default classes). This means that in our code in ```AddsUserToList``` we can easily replace the collaborators with others if we need to, in case the requirements change. The controller has been reduced to performing the most basic task of collecting input and invoking the correct mehtods to excercise here.
 
-Is the 'After' version better? I think it is. It's easier and faster to test, but even more importantly the collaborators are clearly defined and are treated as *roles*, not as specific implementations. As such, they can always be replaced by different implementations of the role they play. We now can concerate on the *messages* passing between the different *roles* in our system.This brings us closer to a lofty design goal stated by Kent Beck:
+Is the 'After' version better? I think it is. It's easier and faster to test, but even more importantly the collaborators are clearly defined and are treated as *roles*, not as specific implementations. As such, they can always be replaced by different implementations of the role they play. We now can concerate on the *messages* passing between the different *roles* in our system.
+
+When you practice TDD with mock objects you will almost be forced to inject your dependencies in order to mock collaborators. Extracting your business logic into service objects makes all this much easier, and further decoupling from active record makes the tests true unit tests that are also blazing fast.
+
+This brings us closer to a lofty design goal stated by Kent Beck:
 
 >"When you can extend a system solely by adding new objects without modifying any existing objects, then you have a system that is flexible and cheap to maintain."
