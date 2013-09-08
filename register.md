@@ -96,11 +96,11 @@ Good, we can now pass any class that creates a user and any class that notifies 
 Further Decouple from ActiveRecord
 --------------------------
 
-That's almost perfect, but we still have one more thing to improve. We are still littering the service object with an active record class, which means that our unit tests will have to load active record and the entire rails stack. This can be very slow depending on the dependencies of your app. Ideally the unit tests should be able to run without loading rails or your app.
+That's almost perfect, but we still have one more thing to improve. We are still littering the service object with references to an active record class, ```User```, which means that our unit tests will have to load active record and the entire rails stack, but even worse - the entire app and its dependencies. This load time can be a few seconds for tiny rails apps, but can grow to 30 seconds for really big rails apps. Unit tests should be *fast* to run as part of your test suite but also fast to run individually, which means they should not load the rails stack or your application.
 
-But how can we both give reasonable defaults and make sure no active record object is getting loaded? *deferred evaluation* to the rescue. We will use ```Hash#fetch``` which receives a block that is not evaluated unless the queried key is not present.
+But how can we both give a reasonable default value to ```creates_user``` and make sure no active record object is getting loaded? *deferred evaluation* to the rescue. We will use ```Hash#fetch``` which receives a block that is not evaluated unless the queried key is not present.
 
-Another comment, when my classes contain only one public method I don't like calling it 'run', 'do' or 'perform' since these names don't convey a lot of information. In this case I'd rather call it 'call' and use ruby's shorthand notation for invoking this method. A nice bonus is being able to pass in a proc instead of the class itself if I need it. The end result looks like this:
+Another comment: when my classes contain only one public method I don't like calling it 'run', 'do' or 'perform' since these names don't convey a lot of information. In this case I'd rather call it 'call' and use ruby's shorthand notation for invoking this method. A nice bonus is being able to pass in a proc instead of the class itself if I need it. The end result looks like this:
 
 Before:
 
