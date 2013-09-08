@@ -21,7 +21,7 @@ end
 ```
 We first find the user or create it if it doesn't exist. Then we notify the user it was added to the mailing list via ```NotifiesUser``` (probably asking her to confirm). We update the user record with the name of the mailing list and then render the user as a json.
 
-Extracting To A (Somewhat) Fat Model
+Extract Logic To A Fat Model
 --------------
 The logic in this controller is pretty simple, but it's still too much for a controller and should be extracted out. But where to? The word 'user' that can be found in almost every line here might suggest that we should push it to the ```User``` model. Let's try this:
 
