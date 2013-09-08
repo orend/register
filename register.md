@@ -1,6 +1,11 @@
-Suppose you have a controller that's responsible for handling users signing up to a mailing list:
-Fat Controller
+Service Objects + No Rails Dependencies = Fastest Possible Tests
+=============================================================
+
+**Tl;Dr:** Extract service objects in a way that completely removes rails dependencies during test run to achieve the fastest possible test times, but more importantly - a better design.
+
+Starting With A Fat Controller
 --------------
+Suppose you have a controller that's responsible for handling users signing up to a mailing list:
 
 ```ruby
 class EmailListController < ApplicationController
@@ -16,7 +21,7 @@ end
 ```
 We first find the user or create it if it doesn't exist. Then we notify the user it was added to the mailing list via ```NotifiesUser``` (probably asking her to confirm). We update the user record with the name of the mailing list and then render the user as a json.
 
-Fat Model
+Extracting To A (Somewhat) Fat Model
 --------------
 The logic in this controller is pretty simple, but it's still too much for a controller and should be extracted out. But where to? The word 'user' that can be found in almost every line here might suggest that we should push it to the ```User``` model. Let's try this:
 
@@ -41,7 +46,7 @@ class User < ActiveRecord::Base
   end
 end
 ```
-Extact Service Object
+Extact A Service Object
 --------------
 This is better, as the ```User``` class is now responsible for creating and updating users, but there are still a few problems. The first one is that now ```User``` is handling mailing list additions, as well as notifying the user about this. This is too many responsibilities for one class. Having an active record object handle anything more than CRUD and associations is a violation of the Single Responsibility Principle.
 
@@ -88,14 +93,15 @@ end
 ```
 Good, we can now pass any class that creates a user and any class that notifies a user, which means testing will be easier, but more importantly, that replacing, say, an email notifier with a SMS notifier will just be a matter of passing a different object to our service object. Since we supplied reasonable defaults we don't need to pass these dependencies at all, and the controller stays unchanged.
 
+Further Decouple from ActiveRecord
+--------------------------
+
 That's almost perfect, but we still have one more thing to improve. We are still littering the service object with an active record class, which means that our unit tests will have to load active record and the entire rails stack. This can be very slow depending on the dependencies of your app. Ideally the unit tests should be able to run without loading rails or your app.
 
 But how can we both give reasonable defaults and make sure no active record object is getting loaded? *deferred evaluation* to the rescue. We will use ```Hash#fetch``` which receives a block that is not evaluated unless the queried key is not present.
 
 Another comment, when my classes contain only one public method I don't like calling it 'run', 'do' or 'perform' since these names don't convey a lot of information. In this case I'd rather call it 'call' and use ruby's shorthand notation for invoking this method. A nice bonus is being able to pass in a proc instead of the class itself if I need it. The end result looks like this:
 
-Further Decouple from ActiveRecord
---------------------------
 Before:
 
 ```ruby
