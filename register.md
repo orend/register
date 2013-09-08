@@ -1,7 +1,7 @@
 Service Objects + No Rails Dependencies = Fastest Possible Tests
 =============================================================
 
-**Tl;Dr:** Extract service objects in a way that completely removes rails dependencies during test run to achieve the fastest possible test times, but more importantly - a better design.
+**TL;DR:** Extract service objects in a way that completely removes rails dependencies during test run to achieve the fastest possible test times, but more importantly - a better design.
 
 Starting With A Fat Controller
 --------------
@@ -96,7 +96,8 @@ Good, we can now pass any class that creates a user and any class that notifies 
 Further Decouple from ActiveRecord
 --------------------------
 
-That's almost perfect, but we still have one more thing to improve. We are still littering the service object with references to an active record class, ```User```, which means that our unit tests will have to load active record and the entire rails stack, but even worse - the entire app and its dependencies. This load time can be a few seconds for trivial rails apps, but can grow to 30 seconds for really big rails apps. Unit tests should be *fast* to run as part of your test suite but also fast to run individually, which means they should not load the rails stack or your application.
+That's almost perfect, but we still have one more thing to improve. We are still littering the service object with references to an active record class, ```User```, which means that our unit tests will have to load active record and the entire rails stack, but even worse - the entire app and its dependencies. This load time can be a few seconds for trivial rails apps, but can grow to 30 seconds for really big rails apps. Unit tests should be *fast* to run as part of your test suite but also fast to run individually, which means they should not load the rails stack or your application (also see [Corey Haines's talk](http://www.youtube.com/watch?v=bNn6M2vqxHE)
+ on the subject).
 
 But how can we both both give a reasonable default value to ```creates_user``` and make sure no active record object is getting loaded? *deferred evaluation* to the rescue. We will use ```Hash#fetch``` which receives a block that is not evaluated unless the queried key is not present. This way we are not forced to be explicit in the app code and specify the actual classes we pass in, but at the same time able to pass a mock that will replace the active record class during test time altogether; the code in the block to ```fetch``` will never get evaluated, and ```User``` won't get loaded.
 
@@ -168,6 +169,6 @@ Conclusion
 
 The 'Before' version's tests are harder to write and are sugnificantly slower. It also bundles many responsibiilties into a single class, the Controller class. The 'After' version is easier to test (we pass mocks to override the default classes). This means that in our code in ```AddsUserToList``` we can easily replace the collaborators with others if we need to, in case the requirements change. The controller has been reduced to performing the most basic task of collecting input and invoking the correct mehtods to excercise here.
 
-Is the 'After' version better? I think it is. It's easier and faster to test, but even more importantly the collaborators are clearly defined and are treated as *roles*, not as specific implementations. As such, they can always be replaced by different implementations of the role they play. This brings us closer to the goal that Kent Beck states:
+Is the 'After' version better? I think it is. It's easier and faster to test, but even more importantly the collaborators are clearly defined and are treated as *roles*, not as specific implementations. As such, they can always be replaced by different implementations of the role they play. We now can concerate on the *messages* passing between the different *roles* in our system.This brings us closer to a design goal that Kent Beck stated once and we should all strive for:
 
 >"When you can extend a system solely by adding new objects without modifying any existing objects, then you have a system that is flexible and cheap to maintain."
