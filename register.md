@@ -49,7 +49,7 @@ This is better: the ```User``` class is now responsible for creating and updatin
 
 The second problem is that business logic in active record classes is a pain to unit test. You often need to use factories or to heavily stub out methods of the object under test (don't do that), stub all instances of the class under test (don't do that either) or hit the database in your unit tests (please don't). As a result, testing active record objects can be very slow, sometimes orders of magnitude slower than testing plain ruby objects.
 
-Now, if the code above was the entire ```User``` class and my application was small and simple I'd be perfectly happy with leaving ```User#addToEmailList``` as is. But more complex rails apps that are not groomed often enough tend to have large 'god classes' such as ```User``` or ```Order``` that attract every piece of logic that touches the model. Slow tests make an app harder to maintain and harder to work with. This is when introducing a service object is useful:
+Now, if the code above was the entire ```User``` class and my application was small and simple I'd be perfectly happy with leaving ```User#addToEmailList``` as is. But more complex rails apps that are not groomed often enough tend to have large 'god classes' such as ```User``` or ```Order``` that attract every piece of logic that touches the model. Slow tests make an app harder to maintain and harder to work with. This is when introducing a service object is helping:
 
 Extacting a Service Object
 --------------
@@ -71,10 +71,10 @@ class AddsUserToList
   end
 end
 ```
-We created a plain ruby object, ```AddsUserToList```, which contains the business logic from before. In the controller we call this object and not ```User``` directly.
-This is an improvement, but testing this service object would require us to somehow stub ```User#find_or_create_by``` to avoid hitting the database, and probably also stub out ```NotifiesUser#run``` in order to avoid sending a real notification out. Anyway, hard coding the name of the class of your collaborator is a really bad idea since it couples your class with your collaborators forever.
+We created a plain ruby object, ```AddsUserToList```, which contains the business logic from before (with ```tap``` to make things a little nicer). In the controller we call this object and not ```User``` directly.
+This is an improvement, but testing this service object would require us to somehow stub ```User#find_or_create_by``` to avoid hitting the database, and probably also stub out ```NotifiesUser#run``` in order to avoid sending a real notification out. In any case, hard-coding the name of the class of your collaborator is a really bad idea since it couples your class with your collaborators forever.
 
-The most straight forward way to decouple these classes is to inject the dependencies of ```AddsUserToList```:
+The most straight forward way to decouple the object from its collabortors is to inject the dependencies of ```AddsUserToList```:
 
 Injecting Dependencies
 --------------
