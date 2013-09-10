@@ -176,7 +176,11 @@ describe AddsUserToList do
 end
 ```
 
-As you can see the test code is very similar to the the implementation code here. This is not surprising. A unit test should verify that the object under test sends the correct messages to its collaborators, and in the case of ```AddsUserToList``` we have a controller-like object, and a controller's job is to... coordinate sending messages between collaborators. Sandi Metz talks about what you should and what you shuold not test [here](http://www.confreaks.com/videos/2452-railsconf2013-the-magic-tricks-of-testing). To use her vocabulary, all we are testing here is outgoing command messages since this are the only messages this object sends.
+Here we pass in mocks (doubles) for each collaborator and expect them to receive the correct messages. We do not assert any values - specifically not the value of ```user.email_list_name```. Instead we require that ```user``` receives the ```update_attributes``` method. We need to *trust* ```user``` to update the attributes. After all, that's a unit test for ```AddsUserToList```, not for ```user```.
+
+As you can see there is a close resemblance between the test code and the code it is testing. This is not surprising. A unit test should verify that the object under test sends the correct messages to its collaborators, and in the case of ```AddsUserToList``` we have a controller-like object, and a controller's job is to... coordinate sending messages between collaborators. Sandi Metz talks about what you should and what you shuold not test [here](http://www.confreaks.com/videos/2452-railsconf2013-the-magic-tricks-of-testing). To use her vocabulary, all we are testing here are outgoing command messages since these are the only messages this object sends.
+
+For that reason I think this resemblance is acceptable, but there are other opinions about the matter. Another option is to write the test but then *delete* it aftr it has given us the design input. After all, what's the point in a unit test that needs to change whenever the code under test is changed? In this case we would rely on the integration tests to for regression detection.
 
 Conclusion
 ----------
