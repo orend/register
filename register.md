@@ -49,7 +49,7 @@ This is better: the ```User``` class is now responsible for creating and updatin
 
 The second problem is that business logic in active record classes is a pain to unit test. You often need to use factories or to heavily stub out methods of the object under test (don't do that), stub all instances of the class under test (don't do that either) or hit the database in your unit tests (please don't). As a result, testing active record objects can be very slow, sometimes orders of magnitude slower than testing plain ruby objects.
 
-Now, if the code above was the entire ```User``` class and my application was small and simple I'd be perfectly happy with leaving ```User#addToEmailList``` as is. But more complex rails apps that are not groomed often enough tend to have large 'god classes' such as ```User``` or ```Order``` that attract every piece of logic that touches the model. Slow tests make an app harder to maintain and harder to work with. This is when introducing a service object is helping:
+Now, if the code above was the entire ```User``` class and my application was small and simple I'd be perfectly happy with leaving ```User#addToEmailList``` as is. But more complex rails apps that are not groomed often enough tend to have large 'god classes' such as ```User``` or ```Order``` that attract every piece of logic that touches the model. Slow tests make an app harder to maintain and harder to work with. This is when introducing a service object is helpful:
 
 Extacting a Service Object
 --------------
@@ -90,19 +90,34 @@ class AddsUserToList
   end
 end
 ```
-Good, we can now pass any class that creates a user and any class that notifies a user, which means testing will be easier, but more importantly, that replacing, say, an email notifier with a SMS notifier will just be a matter of passing a different object to our service object. Since we supplied reasonable defaults we don't need to pass these dependencies at all, and the controller stays unchanged.
+Good, we can now pass any class that creates a user and any class that notifies a user, which means testing will be easier which makes passing a different implementation of the dependencies will also be easy. Since we supplied reasonable defaults we don't need to pass these dependencies at all, and our controller can stay unchanged.
 
 Further Decoupling from ActiveRecord
 --------------------------
 
-That's almost perfect, but we still have one more thing to improve. We are still littering the service object with references to an active record class, ```User```, which means that our unit tests will have to load active record and the entire rails stack, but even worse - the entire app and its dependencies. This load time can be a few seconds for trivial rails apps, but can grow to 30 seconds for really big rails apps. Unit tests should be *fast* to run as part of your test suite but also fast to run individually, which means they should not load the rails stack or your application (also see [Corey Haines's talk](http://www.youtube.com/watch?v=bNn6M2vqxHE)
+That's almost perfect, but we still have one more thing to improve. We are still littering the service object with references to an active record class, ```User```, which means that our unit tests will have to load active record and the entire rails stack, but even worse - the entire app and its dependencies. This load time can be a few seconds for trivial rails apps, but can sometimes be 30 seconds for really big rails apps. Unit tests should be *fast* to run as part of your test suite but also fast to run individually, which means they should not load the rails stack or your application (also see [Corey Haines's talk](http://www.youtube.com/watch?v=bNn6M2vqxHE)
  on the subject).
 
 But how can we both both give a reasonable default value to ```creates_user``` and make sure no active record object is getting loaded? *deferred evaluation* to the rescue. We will use ```Hash#fetch``` which receives a block that is not evaluated unless the queried key is not present. This way we are not forced to be explicit in the app code and specify the actual classes we pass in, but at the same time able to pass a mock that will replace the active record class during test time altogether; the code in the block to ```fetch``` will never get evaluated, and ```User``` won't get loaded.
 
 Before I present the final code snippet I'd like to make another comment: when my classes contain only one public method I don't like calling it 'run', 'do' or 'perform' since these names don't convey a lot of information. In this case I'd rather call it 'call' and use ruby's shorthand notation for invoking this method. A nice bonus is being able to pass in a proc instead of the class itself if I need it. The end result looks like this:
+```ruby
+class AddsUserToList
+  def self.call(username, email_list_name, params = {})
+    creates_user = params.fetch(:creates_user) { User }
+    notifies_user = params.fetch(:notifies_user) { NotifiesUser }
 
-Before:
+    creates_user.find_or_create_by(username: username).tap do |user|
+      notifies_user.(user, email_list_name)
+      user.update_attributes(email_list_name: email_list_name)
+    end
+  end
+end
+```
+The Before and After
+-------------------
+
+Here's how the code looked at the beginning of this post:
 
 ```ruby
 class EmailListController < ApplicationController
@@ -116,7 +131,7 @@ class EmailListController < ApplicationController
 end
 
 ```
-After:
+And this is the `After` version:
 
 ```ruby
 class EmailListController < ApplicationController
@@ -142,7 +157,7 @@ end
 ```
 The Tests
 --------
-```AddsUserToList``` can be tested using *true* unit tests: we can easily isolate the class under test and make sure it properly communicates with its collaborators. There is no database access, no heavy handed request stubbing and if we want to - no loading of the rails stack. In fact, I'd argue that any test that requires any of the above is not a unit test, but rather an integration test (see the entire repo [here](https://github.com/orend/register)).
+```AddsUserToList``` can be tested using *true* unit tests: we can easily isolate the class under test and make sure it properly communicates with its collaborators. There is no database access, no heavy handed request stubbing and if we want to - no loading of the rails stack. In fact, I'd argue that any test that requires any of the above is not a unit test, but rather an integration test (see tire repo [here](https://github.com/orend/register)).
 
 ```ruby
 describe AddsUserToList do
