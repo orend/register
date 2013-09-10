@@ -10,10 +10,9 @@ Suppose you have a controller that's responsible for handling users signing up t
 ```ruby
 class EmailListController < ApplicationController
   def create
-    @user = User.find_or_create_by(username: params[:username]).tap do |user|
-      NotifiesUser.run(user, 'blog_list')
-      user.update_attributes(email_list_name: 'blog_list')
-    end
+    @user = User.find_or_create_by(username: params[:username])
+    NotifiesUser.run(@user, 'blog_list')
+    @user.update_attributes(email_list_name: 'blog_list')
     render json: @user
   end
 end
@@ -39,7 +38,7 @@ class User < ActiveRecord::Base
   validates_uniqueness_of :username
 
   def self.addToEmailList(username, email_list_name)
-  	User.find_or_create_by(username: username).tap do |user|
+    User.find_or_create_by(username: username).tap do |user|
       NotifiesUser.run(user, 'blog_list')
       user.update_attributes(email_list_name: 'blog_list')
     end
