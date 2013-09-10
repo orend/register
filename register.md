@@ -1,11 +1,11 @@
 Service Objects + No Rails Dependencies = Fastest Possible Tests
 =============================================================
 
-**TL;DR:** Extract service objects in a way that completely removes rails dependencies during test run to achieve the fastest possible test times, but more importantly - a better design.
+**TL;DR:** Extract service objects and completely remove rails dependencies in tests to achieve the fastest possible test, but more importantly - a better design.
 
 Starting With A Fat Controller
 --------------
-Suppose you have a controller that's responsible for handling users signing up to a mailing list:
+Suppose you have a controller that's responsible for handling users signing up for a mailing list:
 
 ```ruby
 class EmailListController < ApplicationController
