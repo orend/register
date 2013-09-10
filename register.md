@@ -18,12 +18,12 @@ class EmailListController < ApplicationController
 end
 
 ```
-We first find the user or create it if it doesn't exist. Then we notify the user it was added to the mailing list via ```NotifiesUser``` (probably asking her to confirm). We update the user record with the name of the mailing list and then render the user as a json.
+We first find the user or create it if it doesn't exist. Then we notify the user she was added to the mailing list via ```NotifiesUser``` (probably asking her to confirm). We update the user record with the name of the mailing list and then render a json representation of the user.
+
+The logic in this controller is pretty simple, but it's still too complicated for a controller and should be extracted out. But where to? The word '``user``' in almost every line here suggests that we should push it into the ```User``` model (that's [Feature Envy](http://sourcemaking.com/refactoring/feature-envy)). Let's try this:
 
 Extracting Logic to a Fat Model
 --------------
-The logic in this controller is pretty simple, but it's still too much for a controller and should be extracted out. But where to? The word 'user' that can be found in almost every line here might suggest that we should push it to the ```User``` model. Let's try this:
-
 ```ruby
 class EmailListController < ApplicationController
   def create
@@ -45,14 +45,14 @@ class User < ActiveRecord::Base
   end
 end
 ```
-Extacting a Service Object
---------------
-This is better, as the ```User``` class is now responsible for creating and updating users, but there are still a few problems. The first one is that now ```User``` is handling mailing list additions, as well as notifying the user about this. This is too many responsibilities for one class. Having an active record object handle anything more than CRUD and associations is a violation of the Single Responsibility Principle.
+This is better: the ```User``` class is now responsible for creating and updating users. But there are still a few problems. The first one is that now ```User``` is handling mailing list additions, as well user notifications. These are too many responsibilities for one class. Having an active record object handle anything more than CRUD and associations is a violation of the [Single Responsibility Principle](http://en.wikipedia.org/wiki/Single_responsibility_principle).
 
-The second problem is that business logic in active record classes is a pain to unit test. You often need to use factories or to heavily stub out methods of the object under test (don't do that), stub all instances of the class under test (don't do that either) or hit the database in your unit tests (please don't). As a result testing active record objects can be very slow, sometimes orders of magnitude slower than testing plain ruby objects.
+The second problem is that business logic in active record classes is a pain to unit test. You often need to use factories or to heavily stub out methods of the object under test (don't do that), stub all instances of the class under test (don't do that either) or hit the database in your unit tests (please don't). As a result, testing active record objects can be very slow, sometimes orders of magnitude slower than testing plain ruby objects.
 
 Now, if the code above was the entire ```User``` class and my application was small and simple I'd be perfectly happy with leaving ```User#addToEmailList``` as is. But more complex rails apps that are not groomed often enough tend to have large 'god classes' such as ```User``` or ```Order``` that attract every piece of logic that touches the model. Slow tests make an app harder to maintain and harder to work with. This is when introducing a service object is useful:
 
+Extacting a Service Object
+--------------
 ```ruby
 class EmailListController < ApplicationController
   def create
@@ -71,13 +71,13 @@ class AddsUserToList
   end
 end
 ```
-Injecting Dependencies
---------------
-
 We created a plain ruby object, ```AddsUserToList```, which contains the business logic from before. In the controller we call this object and not ```User``` directly.
 This is an improvement, but testing this service object would require us to somehow stub ```User#find_or_create_by``` to avoid hitting the database, and probably also stub out ```NotifiesUser#run``` in order to avoid sending a real notification out. Anyway, hard coding the name of the class of your collaborator is a really bad idea since it couples your class with your collaborators forever.
 
 The most straight forward way to decouple these classes is to inject the dependencies of ```AddsUserToList```:
+
+Injecting Dependencies
+--------------
 
 ```ruby
 class AddsUserToList
