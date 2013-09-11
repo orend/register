@@ -1,7 +1,7 @@
-Service Objects + No Rails Dependencies = Fastest Possible Tests
+Service Objects + No Rails Dependencies = Fastest Possible Test
 =============================================================
 
-**TL;DR:** Extract service objects and completely remove rails dependencies in tests to achieve the fastest possible test, but more importantly - a better design. Skip to [The Before and After](#[The Before and After]) section to see the discussed refactoring.
+**TL;DR:** Extract service objects and completely remove rails dependencies in tests to achieve the fastest possible test, but more importantly - a better design. Skip to [The Before and After](#the-before-and-after) section to see the final result of the refactoring.
 
 Starting With A Fat Controller
 --------------
