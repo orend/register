@@ -1,7 +1,7 @@
 Service Objects + No Rails Dependencies = Fastest Possible Tests
 =============================================================
 
-**TL;DR:** Extract service objects and completely remove rails dependencies in tests to achieve the fastest possible test, but more importantly - a better design.
+**TL;DR:** Extract service objects and completely remove rails dependencies in tests to achieve the fastest possible test, but more importantly - a better design. Skip to [The Before and After](#[The Before and After]) section to see the discussed refactoring.
 
 Starting With A Fat Controller
 --------------
@@ -157,7 +157,7 @@ end
 ```
 The Tests
 --------
-```AddsUserToList``` can be tested using *true* unit tests: we can easily isolate the class under test and make sure it properly communicates with its collaborators. There is no database access, no heavy handed request stubbing and if we want to - no loading of the rails stack. In fact, I'd argue that any test that requires any of the above is not a unit test, but rather an integration test (see tire repo [here](https://github.com/orend/register)).
+```AddsUserToList``` can be tested using *true*, isolated unit tests: we can easily isolate the class under test and make sure it properly communicates with its collaborators. There is no database access, no heavy handed request stubbing and if we want to - no loading of the rails stack. In fact, I'd argue that any test that requires any of the above is not a unit test, but rather an integration test (see tire repo [here](https://github.com/orend/register)).
 
 ```ruby
 describe AddsUserToList do
@@ -178,9 +178,9 @@ end
 
 Here we pass in mocks (doubles) for each collaborator and expect them to receive the correct messages. We do not assert any values - specifically not the value of ```user.email_list_name```. Instead we require that ```user``` receives the ```update_attributes``` method. We need to *trust* ```user``` to update the attributes. After all, that's a unit test for ```AddsUserToList```, not for ```user```.
 
-As you can see there is a close resemblance between the test code and the code it is testing. This is not surprising. A unit test should verify that the object under test sends the correct messages to its collaborators, and in the case of ```AddsUserToList``` we have a controller-like object, and a controller's job is to... coordinate sending messages between collaborators. Sandi Metz talks about what you should and what you shuold not test [here](http://www.confreaks.com/videos/2452-railsconf2013-the-magic-tricks-of-testing). To use her vocabulary, all we are testing here are outgoing command messages since these are the only messages this object sends.
+As you can see there is a close resemblance between the test code and the code it is testing. I don't see it as a problem. A unit test should verify that the object under test sends the correct messages to its collaborators, and in the case of ```AddsUserToList``` we have a controller-like object, and a controller's job is to... coordinate sending messages between collaborators. Sandi Metz talks about what you should and what you shuold not test [here](http://www.confreaks.com/videos/2452-railsconf2013-the-magic-tricks-of-testing). To use her vocabulary, all we are testing here are outgoing command messages since these are the only messages this object sends. For that reason I think this resemblance is acceptable.
 
-For that reason I think this resemblance is acceptable, but there are other opinions about the matter. Another option is to write the test but then *delete* it aftr it has given us the design input. After all, what's the point in a unit test that needs to change whenever the code under test is changed? In this case we would rely on the integration tests to for regression detection.
+I omit the integration (controller) tests here, but [please don't forget them](http://solnic.eu/2012/02/02/yes-you-should-write-controller-tests.html) in your code. They will be much simpler and there will be fewer of them if you extract service objects.
 
 Conclusion
 ----------
