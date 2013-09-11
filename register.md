@@ -148,7 +148,6 @@ class EmailListController < ApplicationController
     render json: @user
   end
 end
-
 ```
 ```ruby
 class AddsUserToList
