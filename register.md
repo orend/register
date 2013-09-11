@@ -63,7 +63,7 @@ end
 ```
 ```ruby
 class AddsUserToList
-  def self.call(username, email_list_name)
+  def self.run(username, email_list_name)
     User.find_or_create_by(username: username).tap do |user|
       NotifiesUser.run(user, 'blog_list')
       user.update_attributes(email_list_name: 'blog_list')
@@ -73,6 +73,9 @@ end
 ```
 We created a plain ruby object, ```AddsUserToList```, which contains the business logic from before (with ```tap``` to make things a little nicer). In the controller we call this object and not ```User``` directly.
 This is an improvement, but testing this service object would require us to somehow stub ```User#find_or_create_by``` to avoid hitting the database, and probably also stub out ```NotifiesUser#run``` in order to avoid sending a real notification out. In any case, hard-coding the name of the class of your collaborator is a really bad idea since it couples your class with your collaborators forever.
+
+Also, referencing the class ```User``` directly means that our unit tests will have to load active record and the entire rails stack, but even worse - the entire app and its dependencies. This load time can be a few seconds for trivial rails apps, but can sometimes be 30 seconds for really big rails apps. Unit tests should be *fast* to run as part of your test suite but also fast to run individually, which means they should not load the rails stack or your application (also see [Corey Haines's talk](http://www.youtube.com/watch?v=bNn6M2vqxHE)
+ on the subject).
 
 The most straight forward way to decouple the object from its collabortors is to inject the dependencies of ```AddsUserToList```:
 
@@ -90,22 +93,24 @@ class AddsUserToList
   end
 end
 ```
-Good, we can now pass any class that creates a user and any class that notifies a user, which means testing will be easier which makes passing a different implementation of the dependencies will also be easy. Since we supplied reasonable defaults we don't need to pass these dependencies at all, and our controller can stay unchanged.
+We can now pass any class that creates a user and any class that notifies a user, which means testing will be easier which makes passing a different implementation of the dependencies will also be easy. Since we supplied reasonable defaults we don't need to pass these dependencies at all, and our controller can stay unchanged.
 
-Further Decoupling from ActiveRecord
---------------------------
+The fact that we are specifying ```User``` as the default value of creates_user in the parameter list does *not* mean that this class and all its dependants (ActiveRecord, our app and other gems) will get loaded. Ruby's *Deferred Evaluation* of the default values means that if these default values are not needed they will not get loaded, so we can run the unit test without loading rails.
 
-That's almost perfect, but we still have one more thing to improve. We are still littering the service object with references to an active record class, ```User```, which means that our unit tests will have to load active record and the entire rails stack, but even worse - the entire app and its dependencies. This load time can be a few seconds for trivial rails apps, but can sometimes be 30 seconds for really big rails apps. Unit tests should be *fast* to run as part of your test suite but also fast to run individually, which means they should not load the rails stack or your application (also see [Corey Haines's talk](http://www.youtube.com/watch?v=bNn6M2vqxHE)
- on the subject).
+Simplifying the Interface
+----------------------------------
 
-But how can we both both give a reasonable default value to ```creates_user``` and make sure no active record object is getting loaded? *deferred evaluation* to the rescue. We will use ```Hash#fetch``` which receives a block that is not evaluated unless the queried key is not present. This way we are not forced to be explicit in the app code and specify the actual classes we pass in, but at the same time able to pass a mock that will replace the active record class during test time altogether; the code in the block to ```fetch``` will never get evaluated, and ```User``` won't get loaded.
+The method ```AddsUserToList#run``` receives 4 arguments. Users of this method need to know the *order* of the list. Also, it is likely that over time you'd discover you need to add more arguments. When this happens you will need to update all users of the method. A more flexible solution is to use a hash of options. This will make the interface more stable and esure the number of arguments does not grow when we find that we need to add more arguments. I often find that for many classes I end up changing from an argument list to a hash of options at some point, so why not use it in the first place? But does it mean that we need to give up the advantages of deferred evaluation of the default values? Not at all.
 
-Before I present the final code snippet I'd like to make another comment: when my classes contain only one public method I don't like calling it 'run', 'do' or 'perform' since these names don't convey a lot of information. In this case I'd rather call it 'call' and use ruby's shorthand notation for invoking this method. A nice bonus is being able to pass in a proc instead of the class itself if I need it. The end result looks like this:
+We will use ```Hash#fetch``` which receives a block that is not evaluated unless the queried key is not present. The code in the block to ```fetch``` will never get evaluated, and ```User``` won't get loaded. In addition, if we need to evealuate more than one statement when computing the default value we can't do it in the argument list itself, but we can do it using ```Hash#fetch```.
+
 ```ruby
 class AddsUserToList
-  def self.call(username, email_list_name, params = {})
+  def self.call(params)
     creates_user = params.fetch(:creates_user) { User }
     notifies_user = params.fetch(:notifies_user) { NotifiesUser }
+    username = params.fetch(:username)
+    email_list_name = params.fetch(:email_list_name)
 
     creates_user.find_or_create_by(username: username).tap do |user|
       notifies_user.(user, email_list_name)
@@ -114,6 +119,9 @@ class AddsUserToList
   end
 end
 ```
+
+Before I present the final code snippet I'd like to make another comment: when my classes contain only one public method I don't like calling it 'run', 'do' or 'perform' since these names don't convey a lot of information. In this case I'd rather call it 'call' and use ruby's shorthand notation for invoking this method. A nice bonus is being able to pass in a proc instead of the class itself if I need it. The end result looks like this:
+
 The Before and After
 -------------------
 
@@ -142,9 +150,11 @@ end
 ```
 ```ruby
 class AddsUserToList
-  def self.call(username, email_list_name, params = {})
+  def self.call(params)
     creates_user = params.fetch(:creates_user) { User }
     notifies_user = params.fetch(:notifies_user) { NotifiesUser }
+    username = params.fetch(:username)
+    email_list_name = params.fetch(:email_list_name)
 
     creates_user.find_or_create_by(username: username).tap do |user|
       notifies_user.(user, email_list_name)
