@@ -1,7 +1,7 @@
-Service Objects + No Rails Dependencies = Fastest Possible Test
+Service Objects + No Rails Dependencies = Fastest Possible Tests
 =============================================================
 
-**TL;DR:** Extract service objects and completely remove rails dependencies in tests to achieve the fastest possible test, but more importantly - a better design. Skip to [The Before and After](#the-before-and-after) section to see the final result of the refactoring.
+**TL;DR:** Extract service objects and completely remove rails dependencies in tests to achieve the fastest possible test, but more importantly - a better design. Skip to [The Before and After](#[The Before and After]) section to see the discussed refactoring.
 
 Starting With A Fat Controller
 --------------
@@ -122,14 +122,12 @@ Here's how the code looked at the beginning of this post:
 ```ruby
 class EmailListController < ApplicationController
   def create
-    @user = User.find_or_create_by(username: params[:username]).tap do |user|
-      NotifiesUser.(user, 'blog_list')
-      user.update_attributes(email_list_name: 'blog_list')
-    end
+    @user = User.find_or_create_by(username: params[:username])
+    NotifiesUser.run(@user, 'blog_list')
+    @user.update_attributes(email_list_name: 'blog_list')
     render json: @user
   end
 end
-
 ```
 And this is the `After` version:
 
