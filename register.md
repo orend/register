@@ -120,6 +120,8 @@ class AddsUserToList
 end
 ```
 
+The argument list is now gone in favor of a hash object (params). The method ```run``` is now caled ```call```.
+
 Before I present the final code snippet I'd like to make another comment: when my classes contain only one public method I don't like calling it 'run', 'do' or 'perform' since these names don't convey a lot of information. In this case I'd rather call it 'call' and use ruby's shorthand notation for invoking this method. A nice bonus is being able to pass in a proc instead of the class itself if I need it. The end result looks like this:
 
 The Before and After
