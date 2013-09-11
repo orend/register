@@ -128,7 +128,6 @@ The Before and After
 -------------------
 
 Here's how the code looked at the beginning of this post:
-
 ```ruby
 class EmailListController < ApplicationController
   def create
@@ -140,7 +139,6 @@ class EmailListController < ApplicationController
 end
 ```
 And this is the `After` version:
-
 ```ruby
 class EmailListController < ApplicationController
   def create
