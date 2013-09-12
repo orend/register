@@ -1,7 +1,7 @@
 Service Objects + No Rails Dependencies = Fastest Possible Tests
 =============================================================
 
-**TL;DR:** Extract service objects and completely remove rails dependencies in tests to achieve the fastest possible test, but more importantly - a better design. Skip to [The Before and After](#[The Before and After]) section to see the discussed refactoring.
+**TL;DR:** Extract service objects and completely remove rails dependencies in tests to achieve the fastest possible tests, but more importantly - a better design. Skip to [The Before and After](#[the-before-and-after]) section if you only want to see the refactoring.
 
 Starting With A Fat Controller
 --------------
@@ -20,7 +20,7 @@ end
 ```
 We first find the user or create it if it doesn't exist. Then we notify the user she was added to the mailing list via ```NotifiesUser``` (probably asking her to confirm). We update the user record with the name of the mailing list and then render a json representation of the user.
 
-The logic in this controller is pretty simple, but it's still too complicated for a controller and should be extracted out. But where to? The word '``user``' in almost every line here suggests that we should push it into the ```User``` model (that's [Feature Envy](http://sourcemaking.com/refactoring/feature-envy)). Let's try this:
+The logic here is pretty straight forward, but it's still too complicated for a controller and should be extracted out. But where to? The word ```user``` in almost every line here suggests that we should push it into the ```User``` model (that's [Feature Envy](http://sourcemaking.com/refactoring/feature-envy)). Let's try this:
 
 Extracting Logic to a Fat Model
 --------------
@@ -38,10 +38,9 @@ class User < ActiveRecord::Base
   validates_uniqueness_of :username
 
   def self.addToEmailList(username, email_list_name)
-    User.find_or_create_by(username: username).tap do |user|
-      NotifiesUser.run(user, 'blog_list')
-      user.update_attributes(email_list_name: 'blog_list')
-    end
+    user = User.find_or_create_by(username: username)
+    NotifiesUser.run(user, 'blog_list')
+    user.update_attributes(email_list_name: 'blog_list')
   end
 end
 ```
@@ -172,7 +171,7 @@ describe AddsUserToList do
     expect(notifies_user).to receive(:call).with(user, 'list_name')
     expect(user).to receive(:update_attributes).with(email_list_name: 'list_name')
 
-    adds_user_to_list.('username', 'list_name', creates_user: creates_user, notifies_user: notifies_user)
+    adds_user_to_list.(username: 'username', email_list_name: 'list_name', creates_user: creates_user, notifies_user: notifies_user)
   end
 end
 ```
