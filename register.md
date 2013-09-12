@@ -99,9 +99,11 @@ The fact that we are specifying ```User``` as the default value of creates_user 
 Simplifying the Interface
 ----------------------------------
 
-The method ```AddsUserToList#run``` receives 4 arguments. Users of this method need to know the *order* of the list. Also, it is likely that over time you'd discover you need to add more arguments. When this happens you will need to update all users of the method. A more flexible solution is to use a hash of options. This will make the interface more stable and esure the number of arguments does not grow when we find that we need to add more arguments. I often find that for many classes I end up changing from an argument list to a hash of options at some point, so why not (use it in the first place)[http://www.poodr.com/]? But does it mean that we need to give up the advantages of deferred evaluation of the default values? Not at all.
+The method ```AddsUserToList#run``` receives 4 arguments. Users of this method need to know the *order* of the list. Also, it is likely that over time you'd discover you need to add more arguments. When this happens you will need to update all users of the method. A more flexible solution is to use a hash of options. This will make the interface more stable and esure the number of arguments does not grow when we find that we need to add more arguments. I often find that for many classes I end up changing from an argument list to a hash of options at some point, so why not [use it in the first place](http://www.poodr.com/)? But does it mean that we need to give up the advantages of deferred evaluation of the default values? Not at all.
 
 We will use ```Hash#fetch``` which receives a block that is not evaluated unless the queried key is not present. The code in the block to ```fetch``` will never get evaluated, and ```User``` won't get loaded. In addition, if we need to evealuate more than one statement when computing the default value we can't do it in the argument list itself, but we can do it using ```Hash#fetch```.
+
+Before I present the final code snippet I'd like to make another comment: when my classes contain only one public method I don't like calling it 'run', 'do' or 'perform' since these names don't convey a lot of information. In this case I'd rather call it 'call' and use ruby's shorthand notation for invoking this method. A nice bonus is being able to pass in a proc instead of the class itself if I need it.
 
 ```ruby
 class AddsUserToList
@@ -117,12 +119,12 @@ class AddsUserToList
 end
 ```
 
-Before I present the final code snippet I'd like to make another comment: when my classes contain only one public method I don't like calling it 'run', 'do' or 'perform' since these names don't convey a lot of information. In this case I'd rather call it 'call' and use ruby's shorthand notation for invoking this method. A nice bonus is being able to pass in a proc instead of the class itself if I need it. The end result looks like this:
+The end result looks like this:
 
 The Before and After
 -------------------
 
-Here's how the code looked at the beginning of this post:
+Before:
 ```ruby
 class EmailListController < ApplicationController
   def create
@@ -133,7 +135,7 @@ class EmailListController < ApplicationController
   end
 end
 ```
-And this is the `After` version:
+After:
 ```ruby
 class EmailListController < ApplicationController
   def create
@@ -157,7 +159,7 @@ end
 ```
 The Tests
 --------
-The class ```AddsUserToList``` can be tested using *true*, isolated unit tests: we can easily isolate the class under test and make sure it properly communicates with its collaborators. There is no database access, no heavy handed request stubbing and if we want to - no loading of the rails stack. In fact, I'd argue that any test that requires any of the above is not a unit test, but rather an integration test (see tire repo [here](https://github.com/orend/register)).
+The class ```AddsUserToList``` can be tested using *true*, isolated unit tests: we can easily isolate the class under test and make sure it properly communicates with its collaborators. There is no database access, no heavy handed request stubbing and if we want to - no loading of the rails stack. In fact, I'd argue that any test that requires any of the above is not a unit test, but rather an integration test (see entire repo [here](https://github.com/orend/register)).
 
 ```ruby
 describe AddsUserToList do
