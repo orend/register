@@ -1,4 +1,4 @@
-Service Objects + No Rails Dependencies = Fastest Possible Tests
+Service Objects - Rails Dependencies = Fastest Possible Tests
 =============================================================
 
 **TL;DR:** Extract service objects and completely remove rails dependencies in tests to achieve the fastest possible tests, but more importantly - a better design. Skip to [The Before and After](#[the-before-and-after]) section if you only want to see the refactoring.
