@@ -1,7 +1,7 @@
 Service Objects - Rails Dependencies = Fastest Possible Tests
 =============================================================
 
-**TL;DR:** Extract service objects and completely remove rails dependencies in tests to achieve the fastest possible tests, but more importantly - a better design. Skip to [The Before and After](#[the-before-and-after]) section if you only want to see the refactoring.
+**TL;DR:** Extract service objects and completely remove rails dependencies in tests to achieve the fastest possible tests, but more importantly - a better design. Skip to [The Complete Refactoring](#[the-complete-refactoring]) section if you only want to see the refactoring.
 
 Starting With A Fat Controller
 --------------
@@ -130,11 +130,10 @@ end
 
 The end result looks like this:
 
-The Before and After
+The Complete Refactoring
 -------------------
 
 Before:
-```ruby
 ```ruby
 class EmailListsController < ApplicationController
   def create
