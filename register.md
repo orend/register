@@ -8,12 +8,22 @@ Starting With A Fat Controller
 Suppose you have a controller that's responsible for handling users signing up for a mailing list:
 
 ```ruby
-class EmailListController < ApplicationController
+class EmailListsController < ApplicationController
   def create
-    @user = User.find_or_create_by(username: params[:username])
-    NotifiesUser.run(@user, 'blog_list')
-    @user.update_attributes(email_list_name: 'blog_list')
-    render json: @user
+    user = User.find_or_create_by(username: params[:username])
+    NotifiesUser.run(user, 'blog_list')
+    user.update_attributes(email_list_name: 'blog_list')
+    render_response_to user
+  end
+
+  private
+
+  def render_response_to(user)
+    if user.errors.empty?
+      render json: user
+    else
+      render json: user.errors, :status => :unprocessable_entity
+    end
   end
 end
 
@@ -25,10 +35,20 @@ The logic here is pretty straight forward, but it's still too complicated for a 
 Extracting Logic to a Fat Model
 --------------
 ```ruby
-class EmailListController < ApplicationController
+class EmailListsController < ApplicationController
   def create
-    @user = User.addToEmailList(params[:username], 'blog_list')
-    render json: @user
+    user = User.addToEmailList(params[:username], 'blog_list')
+    render_response_to user
+  end
+
+  private
+
+  def render_response_to(user)
+    if user.errors.empty?
+      render json: user
+    else
+      render json: user.errors, :status => :unprocessable_entity
+    end
   end
 end
 
@@ -53,10 +73,20 @@ Now, if the code above was the entire ```User``` class and my application was sm
 Extacting a Service Object
 --------------
 ```ruby
-class EmailListController < ApplicationController
+class EmailListsController < ApplicationController
   def create
-    @user = AddsUserToList.run(params[:username], 'blog_list')
-    render json: @user
+    user = AddsUserToList.run(params[:username], 'blog_list')
+    render_response_to user
+  end
+
+  private
+
+  def render_response_to(user)
+    if user.errors.empty?
+      render json: user
+    else
+      render json: user.errors, :status => :unprocessable_entity
+    end
   end
 end
 ```
@@ -126,21 +156,42 @@ The Before and After
 
 Before:
 ```ruby
-class EmailListController < ApplicationController
+```ruby
+class EmailListsController < ApplicationController
   def create
-    @user = User.find_or_create_by(username: params[:username])
-    NotifiesUser.run(@user, 'blog_list')
-    @user.update_attributes(email_list_name: 'blog_list')
-    render json: @user
+    user = User.find_or_create_by(username: params[:username])
+    NotifiesUser.run(user, 'blog_list')
+    user.update_attributes(email_list_name: 'blog_list')
+    render_response_to user
+  end
+
+  private
+
+  def render_response_to(user)
+    if user.errors.empty?
+      render json: user
+    else
+      render json: user.errors, :status => :unprocessable_entity
+    end
   end
 end
 ```
 After:
 ```ruby
-class EmailListController < ApplicationController
+class EmailListsController < ApplicationController
   def create
-    @user = AddsUserToList.(username: params[:username], email_list_name: 'blog_list')
-    render json: @user
+    user = AddsUserToList.(username: params[:username], email_list_name: 'blog_list')
+    render_response_to user
+  end
+
+  private
+
+  def render_response_to(user)
+    if user.errors.empty?
+      render json: user
+    else
+      render json: user.errors, :status => :unprocessable_entity
+    end
   end
 end
 ```
