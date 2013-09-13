@@ -94,7 +94,6 @@ Injecting Dependencies
 ```ruby
 class AddsUserToList
   def self.run(username, email_list_name, creates_user = User, notifies_user = NotifiesUser)
-
     creates_user.find_or_create_by(username: username).tap do |user|
       notifies_user.(user, email_list_name)
       user.update_attributes(email_list_name: email_list_name)
