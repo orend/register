@@ -18,9 +18,9 @@ class EmailListsController < ApplicationController
   end
 end
 ```
-We first find the user or create it if it doesn't exist. Then we notify the user she was added to the mailing list via ```NotifiesUser``` (probably asking her to confirm). We update the user record with the name of the mailing list and then render a json representation of the user.
+We first find the user or create it if it doesn't exist. Then we notify the user she was added to the mailing list via ```NotifiesUser``` (probably asking her to confirm). We update the user record with the name of the mailing list and then hand the ```user``` object to ```respond_with```, which will render the json representation of the user or the proper error response in case saving of the object failed.
 
-The logic here is pretty straight forward, but it's still too complicated for a controller and should be extracted out. But where to? The word ```user``` in almost every line here suggests that we should push it into the ```User``` model (that's [Feature Envy](http://sourcemaking.com/refactoring/feature-envy)). Let's try this:
+The logic here is pretty straight-forward, but it's still too complicated for a controller and should be extracted out. But where to? The word ```user``` in almost every line here suggests that we should push it into the ```User``` model (that's [Feature Envy](http://sourcemaking.com/refactoring/feature-envy)). Let's try this:
 
 Extracting Logic to a Fat Model
 --------------
