@@ -191,10 +191,10 @@ Some Numbers
 
 How much faster is this test from a unit test that touches the database and loads rails and the application? Here are the results:
 
-|               |  Single Test  | Total runtime  |
+|               |  Single Test Runtime | Total Suite Runtime  |
 | ------------- |:-------------:| :-----:|
-| Before        |   0.0530s     |   2.5s |
-| After         |   0.0005s     |   0.4s |
+| **Before**        |   0.0530s     |   2.5s |
+| **After**         |   0.0005s     |   0.4s |
 
 A single test run is roughly **a hundred times faster**. The absolute times are rther small but the difference will be very noticeable when you have hundreds of unit tests or more. The total runtime in the "before" version takes roughly two seconds longer. This is the time it takes to load a trivial rails app on my machine. This will be significantly higher when the app grows in size and adds dependent gems.
 
