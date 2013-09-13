@@ -9,15 +9,12 @@ Suppose you have a controller that's responsible for handling users signing up f
 
 ```ruby
 class EmailListsController < ApplicationController
+  respond_to :json
   def create
     user = User.find_or_create_by(username: params[:username])
     NotifiesUser.run(user, 'blog_list')
     user.update_attributes(email_list_name: 'blog_list')
-    if user.errors.empty?
-      render json: user
-    else
-      render json: user.errors, :status => :unprocessable_entity
-    end
+    respond_with user
   end
 end
 ```
@@ -29,13 +26,10 @@ Extracting Logic to a Fat Model
 --------------
 ```ruby
 class EmailListsController < ApplicationController
+  respond_to :json
   def create
     user = User.addToEmailList(params[:username], 'blog_list')
-    if user.errors.empty?
-      render json: user
-    else
-      render json: user.errors, :status => :unprocessable_entity
-    end
+    respond_with user
   end
 end
 
@@ -61,13 +55,10 @@ Extacting a Service Object
 --------------
 ```ruby
 class EmailListsController < ApplicationController
+  respond_to :json
   def create
     user = AddsUserToList.run(params[:username], 'blog_list')
-    if user.errors.empty?
-      render json: user
-    else
-      render json: user.errors, :status => :unprocessable_entity
-    end
+    respond_with user
   end
 end
 ```
@@ -136,28 +127,22 @@ The Complete Refactoring
 Before:
 ```ruby
 class EmailListsController < ApplicationController
+  respond_to :json
   def create
     user = User.find_or_create_by(username: params[:username])
     NotifiesUser.run(user, 'blog_list')
     user.update_attributes(email_list_name: 'blog_list')
-    if user.errors.empty?
-      render json: user
-    else
-      render json: user.errors, :status => :unprocessable_entity
-    end
+    respond_with user
   end
 end
 ```
 After:
 ```ruby
 class EmailListsController < ApplicationController
+  respond_to :json
   def create
     user = AddsUserToList.(username: params[:username], email_list_name: 'blog_list')
-    if user.errors.empty?
-      render json: user
-    else
-      render json: user.errors, :status => :unprocessable_entity
-    end
+    respond_with user
   end
 end
 ```
