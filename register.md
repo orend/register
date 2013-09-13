@@ -13,12 +13,6 @@ class EmailListsController < ApplicationController
     user = User.find_or_create_by(username: params[:username])
     NotifiesUser.run(user, 'blog_list')
     user.update_attributes(email_list_name: 'blog_list')
-    render_response_to user
-  end
-
-  private
-
-  def render_response_to(user)
     if user.errors.empty?
       render json: user
     else
@@ -26,7 +20,6 @@ class EmailListsController < ApplicationController
     end
   end
 end
-
 ```
 We first find the user or create it if it doesn't exist. Then we notify the user she was added to the mailing list via ```NotifiesUser``` (probably asking her to confirm). We update the user record with the name of the mailing list and then render a json representation of the user.
 
@@ -38,12 +31,6 @@ Extracting Logic to a Fat Model
 class EmailListsController < ApplicationController
   def create
     user = User.addToEmailList(params[:username], 'blog_list')
-    render_response_to user
-  end
-
-  private
-
-  def render_response_to(user)
     if user.errors.empty?
       render json: user
     else
@@ -76,12 +63,6 @@ Extacting a Service Object
 class EmailListsController < ApplicationController
   def create
     user = AddsUserToList.run(params[:username], 'blog_list')
-    render_response_to user
-  end
-
-  private
-
-  def render_response_to(user)
     if user.errors.empty?
       render json: user
     else
@@ -110,7 +91,6 @@ The most straight forward way to decouple the object from its collabortors is to
 
 Injecting Dependencies
 --------------
-
 ```ruby
 class AddsUserToList
   def self.run(username, email_list_name, creates_user = User, notifies_user = NotifiesUser)
@@ -162,12 +142,6 @@ class EmailListsController < ApplicationController
     user = User.find_or_create_by(username: params[:username])
     NotifiesUser.run(user, 'blog_list')
     user.update_attributes(email_list_name: 'blog_list')
-    render_response_to user
-  end
-
-  private
-
-  def render_response_to(user)
     if user.errors.empty?
       render json: user
     else
@@ -181,12 +155,6 @@ After:
 class EmailListsController < ApplicationController
   def create
     user = AddsUserToList.(username: params[:username], email_list_name: 'blog_list')
-    render_response_to user
-  end
-
-  private
-
-  def render_response_to(user)
     if user.errors.empty?
       render json: user
     else
