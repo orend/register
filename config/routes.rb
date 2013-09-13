@@ -15,6 +15,7 @@ Register::Application.routes.draw do
   #   resources :products
   #post 'email_list' => 'email_list#create'
   resources :email_lists, :only => [:create]
+  resources :users, :only => [:show]
 
   # Example resource route with options:
   #   resources :products do
