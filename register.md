@@ -1,7 +1,7 @@
 Slow Tests are the Symptom, not the Cause
 =============================================================
 
-It's surprising how quickly a rails app's test suite can become slow. It's important to understand the reason for this slowness early on and address the real reason behind it, which is, in most case, needless *coupling*.
+It's surprising how quickly a rails app's test suite can become slow. It's important to understand the reason for this slowness early on and address the real reason behind it, which is, in most cases, excessive *coupling*.
 
 In our this refactoring walk-through we will see how small improvements to the design of the app naturally lead to faster tests. We will extract service objects, completely remove all rails dependencies in test time and otherwise reduce the amount of coupling in the app.
 
@@ -55,7 +55,7 @@ The second problem is that business logic in active record classes is a pain to 
 
 Now, if the code above was the entire ```User``` class and my application was small and simple I'd be perfectly happy with leaving ```User#addToEmailList``` as is. But more complex rails apps that are not groomed often enough tend to have large 'god classes' such as ```User``` or ```Order``` that attract every piece of logic that touches the model. Slow tests make an app harder to maintain and harder to work with. This is when introducing a [service object](http://blog.codeclimate.com/blog/2012/10/17/7-ways-to-decompose-fat-activerecord-models/) is helpful:
 
-Extacting a Service Object
+Extracting a Service Object
 --------------
 ```ruby
 class EmailListsController < ApplicationController
@@ -98,14 +98,14 @@ end
 ```
 We can now pass any class that creates a user and any class that notifies a user, which means testing will be easier which makes passing a different implementation of the dependencies will also be easy. Since we supplied reasonable defaults we don't need to pass these dependencies at all, and our controller can stay unchanged.
 
-The fact that we are specifying ```User``` as the default value of creates_user in the parameter list does *not* mean that this class and all its dependants (ActiveRecord, our app and other gems) will get loaded. Ruby's *Deferred Evaluation* of the default values means that if these default values are not needed they will not get loaded, so we can run the unit test without loading rails.
+The fact that we are specifying ```User``` as the default value of creates_user in the parameter list does *not* mean that this class and all its dependents (ActiveRecord, our app and other gems) will get loaded. Ruby's *Deferred Evaluation* of the default values means that if these default values are not needed they will not get loaded, so we can run the unit test without loading rails.
 
 Simplifying the Interface
 ----------------------------------
 
-The method ```AddsUserToList#run``` receives 4 arguments. Users of this method need to know the *order* of the list. Also, it is likely that over time you'd discover you need to add more arguments. When this happens you will need to update all users of the method. A more flexible solution is to use a hash of arguments. This will make the interface more stable and esure the number of arguments does not grow when we find that we need to add more arguments. I often find that for many classes I end up changing from an argument list to a hash of options at some point, so why not [use it in the first place](http://www.poodr.com/)? But does it mean that we need to give up the advantages of deferred evaluation of the default values? Not at all.
+The method ```AddsUserToList#run``` receives 4 arguments. Users of this method need to know the *order* of the list. Also, it is likely that over time you'd discover you need to add more arguments. When this happens you will need to update all users of the method. A more flexible solution is to use a hash of arguments. This will make the interface more stable and ensure the number of arguments does not grow when we find that we need to add more arguments. I often find that for many classes I end up changing from an argument list to a hash of options at some point, so why not [use it in the first place](http://www.poodr.com/)? But does it mean that we need to give up the advantages of deferred evaluation of the default values? Not at all.
 
-We will use ```Hash#fetch``` which receives a block that is not evaluated unless the queried key is not present. The code in the block to ```fetch``` will never get evaluated, and ```User``` won't get loaded. In addition, if we need to evealuate more than one statement when computing the default value we can't do it in the argument list itself, but we can do it using ```Hash#fetch```.
+We will use ```Hash#fetch``` which receives a block that is not evaluated unless the queried key is not present. The code in the block to ```fetch``` will never get evaluated, and ```User``` won't get loaded. In addition, if we need to evaluate more than one statement when computing the default value we can't do it in the argument list itself, but we can do it using ```Hash#fetch```.
 
 Before I present the final code snippet I'd like to make another comment: when my classes contain only one public method I don't like calling it 'run', 'do' or 'perform' since these names don't convey a lot of information. In this case I'd rather call it 'call' and use ruby's shorthand notation for invoking this method. A nice bonus is being able to pass in a proc instead of the class itself if I need it.
 
@@ -186,7 +186,7 @@ end
 
 Here we pass in mocks (doubles) for each collaborator and expect them to receive the correct messages. We do not assert any values - specifically not the value of ```user.email_list_name```. Instead we require that ```user``` receives the ```update_attributes``` method. We need to *trust* ```user``` to update the attributes. After all, that's a unit test for ```AddsUserToList```, not for ```user```.
 
-As you can see there is a close resemblance between the test code and the code it is testing. I don't see it as a problem. A unit test should verify that the object under test sends the correct messages to its collaborators, and in the case of ```AddsUserToList``` we have a controller-like object, and a controller's job is to... coordinate sending messages between collaborators. Sandi Metz talks about what you should and what you shuold not test [here](http://www.confreaks.com/videos/2452-railsconf2013-the-magic-tricks-of-testing). To use her vocabulary, all we are testing here are outgoing command messages since these are the only messages this object sends. For that reason I think this resemblance is acceptable.
+As you can see there is a close resemblance between the test code and the code it is testing. I don't see it as a problem. A unit test should verify that the object under test sends the correct messages to its collaborators, and in the case of ```AddsUserToList``` we have a controller-like object, and a controller's job is to... coordinate sending messages between collaborators. Sandi Metz talks about what you should and what you should not test [here](http://www.confreaks.com/videos/2452-railsconf2013-the-magic-tricks-of-testing). To use her vocabulary, all we are testing here are outgoing command messages since these are the only messages this object sends. For that reason I think this resemblance is acceptable.
 
 I omit the controller and integration tests here, but [please don't forget them](http://solnic.eu/2012/02/02/yes-you-should-write-controller-tests.html) in your code. They will be much simpler and there will be fewer of them if you extract service objects.
 
@@ -200,14 +200,14 @@ How much faster is this test from a unit test that touches the database and load
 | **'false' unit test**        |   0.0530s     |   2.5s |
 | **true unit test**         |   0.0005s     |   0.4s |
 
-A single test run is roughly **a hundred times faster**. The absolute times are rther small but the difference will be very noticeable when you have hundreds of unit tests or more. The total runtime in the "before" version takes roughly two seconds longer. This is the time it takes to load a trivial rails app on my machine. This will be significantly higher when the app grows in size and adds dependent gems.
+A single test run is roughly **a hundred times faster**. The absolute times are rather small but the difference will be very noticeable when you have hundreds of unit tests or more. The total runtime in the "before" version takes roughly two seconds longer. This is the time it takes to load a trivial rails app on my machine. This will be significantly higher when the app grows in size and adds dependent gems.
 
 Conclusion
 ----------
 
-The 'Before' version's tests are harder to write and are significantly slower. It also bundles many responsibiilties into a single class, the Controller class. The 'After' version is easier to test (we pass mocks to override the default classes). This means that in our code in ```AddsUserToList``` we can easily replace the collaborators with others if we need to, in case the requirements change. The controller has been reduced to performing the most basic task of collecting input and invoking the correct mehtods to excercise here.
+The 'Before' version's tests are harder to write and are significantly slower. It also bundles many responsibilities into a single class, the Controller class. The 'After' version is easier to test (we pass mocks to override the default classes). This means that in our code in ```AddsUserToList``` we can easily replace the collaborators with others if we need to, in case the requirements change. The controller has been reduced to performing the most basic task of collecting input and invoking the correct methods to exercise here.
 
-Is the 'After' version better? I think it is. It's easier and faster to test, but even more importantly the collaborators are clearly defined and are treated as *roles*, not as specific implementations. As such, they can always be replaced by different implementations of the role they play. We now can concerate on the *messages* passing between the different *roles* in our system.
+Is the 'After' version better? I think it is. It's easier and faster to test, but even more importantly the collaborators are clearly defined and are treated as *roles*, not as specific implementations. As such, they can always be replaced by different implementations of the role they play. We now can concentrate on the *messages* passing between the different *roles* in our system.
 
 When you practice TDD with mock objects you will almost be forced to inject your dependencies in order to mock collaborators. Extracting your business logic into service objects makes all this much easier, and further decoupling from active record makes the tests true unit tests that are also blazing fast.
 
