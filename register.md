@@ -1,11 +1,15 @@
-Service Objects - Rails Dependencies = Fastest Possible Tests
+Slow Tests are the Symptom, not the Cause
 =============================================================
 
-**TL;DR:** Extract service objects and completely remove rails dependencies in tests to achieve the fastest possible tests, but more importantly - a better design. Skip to [The Complete Refactoring](#[the-complete-refactoring]) section if you only want to see the refactoring.
+It's surprising how quickly a rails app's test suite can become slow. It's important to understand the reason for this slowness early on and address the real reason behind it, which is, in most case, needless *coupling*.
+
+In our this refactoring walk-through we will see how small improvements to the design of the app naturally lead to faster tests. We will extract service objects, completely remove all rails dependencies in test time and otherwise reduce the amount of coupling in the app.
+
+Our goal is to have a simple, flexible and easy to maintain system in which objects can be replaced with others with minimal code changes. The test code is the first user of the app. If it can verify the behavior of the system by easily replacing objects with mocks it means that we achieved our goal. Speedy tests are a great side effect.
 
 Starting With A Fat Controller
 --------------
-Suppose you have a controller that's responsible for handling users signing up for a mailing list:
+Suppose we have a controller that's responsible for handling users signing up for a mailing list:
 
 ```ruby
 class EmailListsController < ApplicationController
@@ -184,7 +188,7 @@ Here we pass in mocks (doubles) for each collaborator and expect them to receive
 
 As you can see there is a close resemblance between the test code and the code it is testing. I don't see it as a problem. A unit test should verify that the object under test sends the correct messages to its collaborators, and in the case of ```AddsUserToList``` we have a controller-like object, and a controller's job is to... coordinate sending messages between collaborators. Sandi Metz talks about what you should and what you shuold not test [here](http://www.confreaks.com/videos/2452-railsconf2013-the-magic-tricks-of-testing). To use her vocabulary, all we are testing here are outgoing command messages since these are the only messages this object sends. For that reason I think this resemblance is acceptable.
 
-I omit the integration (controller) tests here, but [please don't forget them](http://solnic.eu/2012/02/02/yes-you-should-write-controller-tests.html) in your code. They will be much simpler and there will be fewer of them if you extract service objects.
+I omit the controller and integration tests here, but [please don't forget them](http://solnic.eu/2012/02/02/yes-you-should-write-controller-tests.html) in your code. They will be much simpler and there will be fewer of them if you extract service objects.
 
 Some Numbers
 ----------
@@ -193,8 +197,8 @@ How much faster is this test from a unit test that touches the database and load
 
 |               |  Single Test Runtime | Total Suite Runtime  |
 | ------------- |:-------------:| :-----:|
-| **Before**        |   0.0530s     |   2.5s |
-| **After**         |   0.0005s     |   0.4s |
+| **'false' unit test**        |   0.0530s     |   2.5s |
+| **true unit test**         |   0.0005s     |   0.4s |
 
 A single test run is roughly **a hundred times faster**. The absolute times are rther small but the difference will be very noticeable when you have hundreds of unit tests or more. The total runtime in the "before" version takes roughly two seconds longer. This is the time it takes to load a trivial rails app on my machine. This will be significantly higher when the app grows in size and adds dependent gems.
 
