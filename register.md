@@ -201,7 +201,7 @@ A single test run is roughly **a hundred times faster**. The absolute times are 
 Conclusion
 ----------
 
-The 'Before' version's tests are harder to write and are sugnificantly slower. It also bundles many responsibiilties into a single class, the Controller class. The 'After' version is easier to test (we pass mocks to override the default classes). This means that in our code in ```AddsUserToList``` we can easily replace the collaborators with others if we need to, in case the requirements change. The controller has been reduced to performing the most basic task of collecting input and invoking the correct mehtods to excercise here.
+The 'Before' version's tests are harder to write and are significantly slower. It also bundles many responsibiilties into a single class, the Controller class. The 'After' version is easier to test (we pass mocks to override the default classes). This means that in our code in ```AddsUserToList``` we can easily replace the collaborators with others if we need to, in case the requirements change. The controller has been reduced to performing the most basic task of collecting input and invoking the correct mehtods to excercise here.
 
 Is the 'After' version better? I think it is. It's easier and faster to test, but even more importantly the collaborators are clearly defined and are treated as *roles*, not as specific implementations. As such, they can always be replaced by different implementations of the role they play. We now can concerate on the *messages* passing between the different *roles* in our system.
 
