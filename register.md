@@ -214,3 +214,5 @@ When you practice TDD with mock objects you will almost be forced to inject your
 This brings us closer to a lofty design goal stated by Kent Beck:
 
 >"When you can extend a system solely by adding new objects without modifying any existing objects, then you have a system that is flexible and cheap to maintain."
+
+Using mocks and dependency injection vis BDD makes sure your system is designed for this form of modularity from the get go. You know you can replace your objects with a different implementation because this is exactly what you did in your tests.
