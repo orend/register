@@ -32,7 +32,7 @@ Extracting Logic to a Fat Model
 class EmailListsController < ApplicationController
   respond_to :json
   def create
-    user = User.addToEmailList(params[:username], 'blog_list')
+    user = User.add_to_email_list(params[:username], 'blog_list')
     respond_with user
   end
 end
@@ -42,7 +42,7 @@ end
 class User < ActiveRecord::Base
   validates_uniqueness_of :username
 
-  def self.addToEmailList(username, email_list_name)
+  def self.add_to_email_list(username, email_list_name)
     user = User.find_or_create_by(username: username)
     NotifiesUser.run(user, 'blog_list')
     user.update_attributes(email_list_name: 'blog_list')
@@ -53,7 +53,7 @@ This is better: the ```User``` class is now responsible for creating and updatin
 
 The second problem is that business logic in active record classes is a pain to unit test. You often need to use factories or to heavily stub out methods of the object under test (don't do that), stub all instances of the class under test (don't do that either) or hit the database in your unit tests (please don't). As a result, testing active record objects can be very slow, sometimes orders of magnitude slower than testing plain ruby objects.
 
-Now, if the code above was the entire ```User``` class and my application was small and simple I might happy with leaving ```User#addToEmailList``` as is. But in a little bigger rails apps that are not groomed often enough, models, controllers and domain logic tend to get tangled (coupled) together and needlessly complicate things (Rich Hickey, the inventor of clojure, calls it *incidental complexity*). This is when introducing a [service object](http://blog.codeclimate.com/blog/2012/10/17/7-ways-to-decompose-fat-activerecord-models/) is helpful:
+Now, if the code above was the entire ```User``` class and my application was small and simple I might happy with leaving ```User#add_to_email_list``` as is. But in a little bigger rails apps that are not groomed often enough, models, controllers and domain logic tend to get tangled (coupled) together and needlessly complicate things (Rich Hickey, the inventor of clojure, calls it *incidental complexity*). This is when introducing a [service object](http://blog.codeclimate.com/blog/2012/10/17/7-ways-to-decompose-fat-activerecord-models/) is helpful:
 
 Extracting a Service Object
 --------------
