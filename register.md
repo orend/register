@@ -12,12 +12,12 @@ Starting With A Fat Controller
 Suppose we have a controller that's responsible for handling users signing up for a mailing list:
 
 ```ruby
-class EmailListsController < ApplicationController
+class MailingListsController < ApplicationController
   respond_to :json
   def create
     user = User.find_or_create_by(username: params[:username])
     NotifiesUser.run(user, 'blog_list')
-    user.update_attributes(email_list_name: 'blog_list')
+    user.update_attributes(mailing_list_name: 'blog_list')
     respond_with user
   end
 end
@@ -29,10 +29,10 @@ The logic here is pretty straight-forward, but it's still too complicated for a 
 Extracting Logic to a Fat Model
 --------------
 ```ruby
-class EmailListsController < ApplicationController
+class MailingListsController < ApplicationController
   respond_to :json
   def create
-    user = User.add_to_email_list(params[:username], 'blog_list')
+    user = User.add_to_mailing_list(params[:username], 'blog_list')
     respond_with user
   end
 end
@@ -42,10 +42,10 @@ end
 class User < ActiveRecord::Base
   validates_uniqueness_of :username
 
-  def self.add_to_email_list(username, email_list_name)
+  def self.add_to_mailing_list(username, mailing_list_name)
     user = User.find_or_create_by(username: username)
     NotifiesUser.run(user, 'blog_list')
-    user.update_attributes(email_list_name: 'blog_list')
+    user.update_attributes(mailing_list_name: 'blog_list')
   end
 end
 ```
@@ -53,12 +53,12 @@ This is better: the ```User``` class is now responsible for creating and updatin
 
 The second problem is that business logic in active record classes is a pain to unit test. You often need to use factories or to heavily stub out methods of the object under test (don't do that), stub all instances of the class under test (don't do that either) or hit the database in your unit tests (please don't). As a result, testing active record objects can be very slow, sometimes orders of magnitude slower than testing plain ruby objects.
 
-Now, if the code above was the entire ```User``` class and my application was small and simple I might happy with leaving ```User#add_to_email_list``` as is. But in a little bigger rails apps that are not groomed often enough, models, controllers and domain logic tend to get tangled (coupled) together and needlessly complicate things (Rich Hickey, the inventor of clojure, calls it *incidental complexity*). This is when introducing a [service object](http://blog.codeclimate.com/blog/2012/10/17/7-ways-to-decompose-fat-activerecord-models/) is helpful:
+Now, if the code above was the entire ```User``` class and my application was small and simple I might happy with leaving ```User#add_to_mailing_list``` as is. But in a little bigger rails apps that are not groomed often enough, models, controllers and domain logic tend to get tangled (coupled) together and needlessly complicate things (Rich Hickey, the inventor of clojure, calls it *incidental complexity*). This is when introducing a [service object](http://blog.codeclimate.com/blog/2012/10/17/7-ways-to-decompose-fat-activerecord-models/) is helpful:
 
 Extracting a Service Object
 --------------
 ```ruby
-class EmailListsController < ApplicationController
+class MailingListsController < ApplicationController
   respond_to :json
   def create
     user = AddsUserToList.run(params[:username], 'blog_list')
@@ -68,10 +68,10 @@ end
 ```
 ```ruby
 class AddsUserToList
-  def self.run(username, email_list_name)
+  def self.run(username, mailing_list_name)
     User.find_or_create_by(username: username).tap do |user|
       NotifiesUser.run(user, 'blog_list')
-      user.update_attributes(email_list_name: 'blog_list')
+      user.update_attributes(mailing_list_name: 'blog_list')
     end
   end
 end
@@ -88,10 +88,10 @@ Injecting Dependencies
 --------------
 ```ruby
 class AddsUserToList
-  def self.run(username, email_list_name, creates_user = User, notifies_user = NotifiesUser)
+  def self.run(username, mailing_list_name, creates_user = User, notifies_user = NotifiesUser)
     creates_user.find_or_create_by(username: username).tap do |user|
-      notifies_user.(user, email_list_name)
-      user.update_attributes(email_list_name: email_list_name)
+      notifies_user.(user, mailing_list_name)
+      user.update_attributes(mailing_list_name: mailing_list_name)
     end
   end
 end
@@ -116,8 +116,8 @@ class AddsUserToList
     notifies_user = args.fetch(:notifies_user) { NotifiesUser }
 
     creates_user.find_or_create_by(username: args.fetch(:username)).tap do |user|
-      notifies_user.(user, args.fetch(:email_list_name))
-      user.update_attributes(email_list_name: args.fetch(:email_list_name))
+      notifies_user.(user, args.fetch(:mailing_list_name))
+      user.update_attributes(mailing_list_name: args.fetch(:mailing_list_name))
     end
   end
 end
@@ -130,22 +130,22 @@ The Complete Refactoring
 
 Before:
 ```ruby
-class EmailListsController < ApplicationController
+class MailingListsController < ApplicationController
   respond_to :json
   def create
     user = User.find_or_create_by(username: params[:username])
     NotifiesUser.run(user, 'blog_list')
-    user.update_attributes(email_list_name: 'blog_list')
+    user.update_attributes(mailing_list_name: 'blog_list')
     respond_with user
   end
 end
 ```
 After:
 ```ruby
-class EmailListsController < ApplicationController
+class MailingListsController < ApplicationController
   respond_to :json
   def create
-    user = AddsUserToList.(username: params[:username], email_list_name: 'blog_list')
+    user = AddsUserToList.(username: params[:username], mailing_list_name: 'blog_list')
     respond_with user
   end
 end
@@ -157,8 +157,8 @@ class AddsUserToList
     notifies_user = args.fetch(:notifies_user) { NotifiesUser }
 
     creates_user.find_or_create_by(username: args.fetch(:username)).tap do |user|
-      notifies_user.(user, args.fetch(:email_list_name))
-      user.update_attributes(email_list_name: args.fetch(:email_list_name))
+      notifies_user.(user, args.fetch(:mailing_list_name))
+      user.update_attributes(mailing_list_name: args.fetch(:mailing_list_name))
     end
   end
 end
@@ -177,14 +177,14 @@ describe AddsUserToList do
   it 'registers a new user' do
     expect(creates_user).to receive(:find_or_create_by).with(username: 'username').and_return(user)
     expect(notifies_user).to receive(:call).with(user, 'list_name')
-    expect(user).to receive(:update_attributes).with(email_list_name: 'list_name')
+    expect(user).to receive(:update_attributes).with(mailing_list_name: 'list_name')
 
-    adds_user_to_list.(username: 'username', email_list_name: 'list_name', creates_user: creates_user, notifies_user: notifies_user)
+    adds_user_to_list.(username: 'username', mailing_list_name: 'list_name', creates_user: creates_user, notifies_user: notifies_user)
   end
 end
 ```
 
-Here we pass in mocks (initialized with ```#double```) for each collaborator and expect them to receive the correct messages. We do not assert any values - specifically not the value of ```user.email_list_name```. Instead we require that ```user``` receives the ```update_attributes``` method. We need to *trust* ```user``` to update the attributes. After all, that's a unit test for ```AddsUserToList```, not for ```user```.
+Here we pass in mocks (initialized with ```#double```) for each collaborator and expect them to receive the correct messages. We do not assert any values - specifically not the value of ```user.mailing_list_name```. Instead we require that ```user``` receives the ```update_attributes``` method. We need to *trust* ```user``` to update the attributes. After all, that's a unit test for ```AddsUserToList```, not for ```user```.
 
 As you can see there is a close resemblance between the test code and the code it is testing. I don't see it as a problem. A unit test should verify that the object under test sends the correct messages to its collaborators, and in the case of ```AddsUserToList``` we have a controller-like object, and a controller's job is to... coordinate sending messages between collaborators. Sandi Metz talks about what you should and what you should not test [here](http://www.confreaks.com/videos/2452-railsconf2013-the-magic-tricks-of-testing). To use her vocabulary, all we are testing here are outgoing command messages since these are the only messages this object sends. For that reason I think this resemblance is acceptable.
 
