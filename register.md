@@ -1,7 +1,7 @@
 Slow Tests are the Symptom, not the Cause
 =============================================================
 
-It's surprising how quickly a rails app's test suite can become slow. It's important to understand the reason for this slowness early on and address the real cause behind it, which in most cases is excessive *coupling* between objects in the system. It's very hard, if not impossible, to have a fast suite without the ability to seamlessly replace objects in your system with mocks or stubs. If you can't isolate your objects this way you'll be forced to write slow integration tests instead of fast unit tests.
+It's surprising how quickly a rails app's test suite can become slow. It's important to understand the reason for this slowness early on and address the real cause behind it, which in most cases is excessive *coupling* between objects in the system. The main idea is to be able to isolate classes so that their unit tests are fast.
 
 In this refactoring walk-through we will see how small, incremental improvements to the design of the app, and specifically, *decoupling*,  naturally lead to faster tests. We will extract service objects, completely remove all rails dependencies in test time and otherwise reduce the amount of coupling in the app.
 
