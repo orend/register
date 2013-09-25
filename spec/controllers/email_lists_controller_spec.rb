@@ -6,6 +6,6 @@ describe EmailListsController, :type => :controller do
     user = mock_model(User)
     AddsUserToList.should_receive(:call).with(username: 'username',
       email_list_name: 'blog_list').and_return(user)
-    post :create, format: :json, username: 'username'
+    post :add_user, format: :json, username: 'username'
   end
 end

@@ -8,13 +8,15 @@ Register::Application.routes.draw do
   # Example of regular route:
   #   get 'products/:id' => 'catalog#view'
 
+  put 'email_lists/add_user/:username' => 'email_lists#add_user'
+
   # Example of named route that can be invoked with purchase_url(id: product.id)
   #   get 'products/:id/purchase' => 'catalog#purchase', as: :purchase
 
   # Example resource route (maps HTTP verbs to controller actions automatically):
   #   resources :products
   #post 'email_list' => 'email_list#create'
-  resources :email_lists, :only => [:create]
+  #resources :email_lists, :only => [:add_user]
   resources :users, :only => [:show]
 
   # Example resource route with options:
