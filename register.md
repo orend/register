@@ -22,7 +22,7 @@ class MailingListsController < ApplicationController
   end
 end
 ```
-We first find the user or create it if it doesn't exist. Then we notify the user she was added to the mailing list via ```NotifiesUser``` (probably asking her to confirm). We update the user record with the name of the mailing list and then hand the ```user``` object to ```respond_with```, which will render the json representation of the user or the proper error response in case saving of the object failed.
+We first find the user. Then we notify the user she was added to the mailing list via ```NotifiesUser``` (probably asking her to confirm). We update the user record with the name of the mailing list and then hand the ```user``` object to ```respond_with```, which will render the json representation of the user or the proper error response in case saving of the object failed.
 
 The logic here is pretty straight-forward, but it's still too complicated for a controller and should be extracted out. But where to? The word ```user``` in almost every line here suggests that we should push it into the ```User``` model (that's [Feature Envy](http://sourcemaking.com/refactoring/feature-envy)). Let's try this:
 
@@ -96,7 +96,7 @@ class AddsUserToList
   end
 end
 ```
-We can now pass any class that creates a user and any class that notifies a user, which means testing will be easier. It also means that passing different implementations will also be easy. Since we supplied reasonable defaults we don't need to be explicit about these dependencies if we don't change them, and our controller can stay unchanged.
+We can now pass any class that finds a user and any class that notifies a user, which means testing will be easier. It also means that passing different implementations will also be easy. Since we supplied reasonable defaults we don't need to be explicit about these dependencies if we don't change them, and our controller can stay unchanged.
 
 The fact that we are specifying ```User``` as the default value of finds_user in the parameter list does *not* mean that this class and all its dependents (ActiveRecord, our app and other gems) will get loaded. Ruby's *Deferred Evaluation* of the default values means that if these default values are not needed they will not get loaded, so we can run the unit test without loading rails.
 
