@@ -17,7 +17,6 @@ ActiveRecord::Schema.define(version: 20130902033205) do
     t.string   "username"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.string   "email"
     t.string   "email_list_name"
   end
 

@@ -88,8 +88,8 @@ Injecting Dependencies
 --------------
 ```ruby
 class AddsUserToList
-  def self.run(username, mailing_list_name, creates_user = User, notifies_user = NotifiesUser)
-    creates_user.find_or_create_by(username: username).tap do |user|
+  def self.run(username, mailing_list_name, finds_user = User, notifies_user = NotifiesUser)
+    finds_user.find_or_create_by(username: username).tap do |user|
       notifies_user.(user, mailing_list_name)
       user.update_attributes(mailing_list_name: mailing_list_name)
     end
@@ -98,7 +98,7 @@ end
 ```
 We can now pass any class that creates a user and any class that notifies a user, which means testing will be easier. It also means that passing different implementations will also be easy. Since we supplied reasonable defaults we don't need to be explicit about these dependencies if we don't change them, and our controller can stay unchanged.
 
-The fact that we are specifying ```User``` as the default value of creates_user in the parameter list does *not* mean that this class and all its dependents (ActiveRecord, our app and other gems) will get loaded. Ruby's *Deferred Evaluation* of the default values means that if these default values are not needed they will not get loaded, so we can run the unit test without loading rails.
+The fact that we are specifying ```User``` as the default value of finds_user in the parameter list does *not* mean that this class and all its dependents (ActiveRecord, our app and other gems) will get loaded. Ruby's *Deferred Evaluation* of the default values means that if these default values are not needed they will not get loaded, so we can run the unit test without loading rails.
 
 Simplifying the Interface
 ----------------------------------
@@ -112,10 +112,10 @@ Before I present the final code snippet I'd like to make another comment: when m
 ```ruby
 class AddsUserToList
   def self.run(args)
-    creates_user = args.fetch(:creates_user) { User }
+    finds_user = args.fetch(:finds_user) { User }
     notifies_user = args.fetch(:notifies_user) { NotifiesUser }
 
-    creates_user.find_or_create_by(username: args.fetch(:username)).tap do |user|
+    finds_user.find_or_create_by(username: args.fetch(:username)).tap do |user|
       notifies_user.(user, args.fetch(:mailing_list_name))
       user.update_attributes(mailing_list_name: args.fetch(:mailing_list_name))
     end
@@ -153,10 +153,10 @@ end
 ```ruby
 class AddsUserToList
   def self.call(args)
-    creates_user = args.fetch(:creates_user) { User }
+    finds_user = args.fetch(:finds_user) { User }
     notifies_user = args.fetch(:notifies_user) { NotifiesUser }
 
-    creates_user.find_or_create_by(username: args.fetch(:username)).tap do |user|
+    finds_user.find_or_create_by(username: args.fetch(:username)).tap do |user|
       notifies_user.(user, args.fetch(:mailing_list_name))
       user.update_attributes(mailing_list_name: args.fetch(:mailing_list_name))
     end
@@ -169,17 +169,17 @@ The class ```AddsUserToList``` can be tested using *true*, isolated unit tests: 
 
 ```ruby
 describe AddsUserToList do
-  let(:creates_user) { double('creates_user') }
+  let(:finds_user) { double('finds_user') }
   let(:notifies_user) { double('notifies_user') }
   let(:user) { double('user') }
   subject(:adds_user_to_list) { AddsUserToList }
 
   it 'registers a new user' do
-    expect(creates_user).to receive(:find_or_create_by).with(username: 'username').and_return(user)
+    expect(finds_user).to receive(:find_or_create_by).with(username: 'username').and_return(user)
     expect(notifies_user).to receive(:call).with(user, 'list_name')
     expect(user).to receive(:update_attributes).with(mailing_list_name: 'list_name')
 
-    adds_user_to_list.(username: 'username', mailing_list_name: 'list_name', creates_user: creates_user, notifies_user: notifies_user)
+    adds_user_to_list.(username: 'username', mailing_list_name: 'list_name', finds_user: finds_user, notifies_user: notifies_user)
   end
 end
 ```
