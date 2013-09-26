@@ -14,7 +14,7 @@ Suppose we have a controller that's responsible for handling users signing up fo
 ```ruby
 class MailingListsController < ApplicationController
   respond_to :json
-  def create
+  def add_user
     user = User.find(username: params[:username])
     NotifiesUser.run(user, 'blog_list')
     user.update_attributes(mailing_list_name: 'blog_list')
@@ -31,7 +31,7 @@ Extracting Logic to a Fat Model
 ```ruby
 class MailingListsController < ApplicationController
   respond_to :json
-  def create
+  def add_user
     user = User.add_to_mailing_list(params[:username], 'blog_list')
     respond_with user
   end
@@ -60,7 +60,7 @@ Extracting a Service Object
 ```ruby
 class MailingListsController < ApplicationController
   respond_to :json
-  def create
+  def add_user
     user = AddsUserToList.run(params[:username], 'blog_list')
     respond_with user
   end
@@ -132,7 +132,7 @@ Before:
 ```ruby
 class MailingListsController < ApplicationController
   respond_to :json
-  def create
+  def add_user
     user = User.find(username: params[:username])
     NotifiesUser.run(user, 'blog_list')
     user.update_attributes(mailing_list_name: 'blog_list')
@@ -144,7 +144,7 @@ After:
 ```ruby
 class MailingListsController < ApplicationController
   respond_to :json
-  def create
+  def add_user
     user = AddsUserToList.(username: params[:username], mailing_list_name: 'blog_list')
     respond_with user
   end
