@@ -15,14 +15,14 @@ Suppose we have a controller that's responsible for handling users signing up fo
 class MailingListsController < ApplicationController
   respond_to :json
   def add_user
-    user = User.find(username: params[:username])
+    user = User.find_by!(username: params[:username])
     NotifiesUser.run(user, 'blog_list')
     user.update_attributes(mailing_list_name: 'blog_list')
     respond_with user
   end
 end
 ```
-We first find the user. Then we notify the user she was added to the mailing list via ```NotifiesUser``` (probably asking her to confirm). We update the user record with the name of the mailing list and then hand the ```user``` object to ```respond_with```, which will render the json representation of the user or the proper error response in case saving of the object failed.
+We first find the user (an exception is raised if the user is not found). Then we notify the user she was added to the mailing list via ```NotifiesUser``` (probably asking her to confirm). We update the user record with the name of the mailing list and then hand the ```user``` object to ```respond_with```, which will render the json representation of the user or the proper error response in case saving of the object failed.
 
 The logic here is pretty straight-forward, but it's still too complicated for a controller and should be extracted out. But where to? The word ```user``` in almost every line here suggests that we should push it into the ```User``` model (that's [Feature Envy](http://sourcemaking.com/refactoring/feature-envy)). Let's try this:
 
@@ -43,7 +43,7 @@ class User < ActiveRecord::Base
   validates_uniqueness_of :username
 
   def self.add_to_mailing_list(username, mailing_list_name)
-    user = User.find(username: username)
+    user = User.find_by!(username: username)
     NotifiesUser.run(user, 'blog_list')
     user.update_attributes(mailing_list_name: 'blog_list')
   end
@@ -69,7 +69,7 @@ end
 ```ruby
 class AddsUserToList
   def self.run(username, mailing_list_name)
-    user = User.find(username: username)
+    user = User.find_by!(username: username)
     NotifiesUser.run(user, 'blog_list')
     user.update_attributes(mailing_list_name: 'blog_list')
     user
@@ -77,7 +77,7 @@ class AddsUserToList
 end
 ```
 We created a plain ruby object, ```AddsUserToList```, which contains the business logic from before. In the controller we call this object and not ```User``` directly.
-This is an improvement, but testing this service object would require us to somehow stub ```User#find``` to avoid hitting the database, and probably also stub out ```NotifiesUser#run``` in order to avoid sending a real notification out. In any case, hard-coding the name of the class of your collaborator is a bad idea since it couples the two together and makes it impossible to replace the class with a different implementation.
+This is an improvement, but testing this service object would require us to somehow stub ```User#find_by!``` to avoid hitting the database, and probably also stub out ```NotifiesUser#run``` in order to avoid sending a real notification out. In any case, hard-coding the name of the class of your collaborator is a bad idea since it couples the two together and makes it impossible to replace the class with a different implementation.
 
 Also, referencing the class ```User``` directly means that our unit tests will have to load active record and the entire rails stack, but even worse - the entire app and its dependencies. This load time can be a few seconds for trivial rails apps, but can sometimes be 30 seconds for really big rails apps. Unit tests should be *fast* to run as part of your test suite but also fast to run individually, which means they should not load the rails stack or your application (also see [Corey Haines's talk](http://www.youtube.com/watch?v=bNn6M2vqxHE)
  on the subject).
@@ -89,7 +89,7 @@ Injecting Dependencies
 ```ruby
 class AddsUserToList
   def self.run(username, mailing_list_name, finds_user = User, notifies_user = NotifiesUser)
-    finds_user.find(username: username)
+    finds_user.find_by!(username: username)
     notifies_user.(user, mailing_list_name)
     user.update_attributes(mailing_list_name: mailing_list_name)
     user
@@ -115,7 +115,7 @@ class AddsUserToList
     finds_user = args.fetch(:finds_user) { User }
     notifies_user = args.fetch(:notifies_user) { NotifiesUser }
 
-    finds_user.find(username: args.fetch(:username))
+    finds_user.find_by!(username: args.fetch(:username))
     notifies_user.(user, args.fetch(:mailing_list_name))
     user.update_attributes(mailing_list_name: args.fetch(:mailing_list_name))
     user
@@ -133,7 +133,7 @@ Before:
 class MailingListsController < ApplicationController
   respond_to :json
   def add_user
-    user = User.find(username: params[:username])
+    user = User.find_by!(username: params[:username])
     NotifiesUser.run(user, 'blog_list')
     user.update_attributes(mailing_list_name: 'blog_list')
     respond_with user
@@ -156,7 +156,7 @@ class AddsUserToList
     finds_user = args.fetch(:finds_user) { User }
     notifies_user = args.fetch(:notifies_user) { NotifiesUser }
 
-    finds_user.find(username: args.fetch(:username))
+    finds_user.find_by!(username: args.fetch(:username))
     notifies_user.(user, args.fetch(:mailing_list_name))
     user.update_attributes(mailing_list_name: args.fetch(:mailing_list_name))
     user
@@ -175,7 +175,7 @@ describe AddsUserToList do
   subject(:adds_user_to_list) { AddsUserToList }
 
   it 'registers a new user' do
-    expect(finds_user).to receive(:find).with(username: 'username').and_return(user)
+    expect(finds_user).to receive(:find_by!).with(username: 'username').and_return(user)
     expect(notifies_user).to receive(:call).with(user, 'list_name')
     expect(user).to receive(:update_attributes).with(mailing_list_name: 'list_name')
 
