@@ -1,7 +1,9 @@
 Slow Tests are the Symptom, not the Cause
 =============================================================
 
-It's surprising how quickly a rails app's test suite can become slow. It's important to understand the reason for this slowness early on and address the real cause behind it, which in most cases is excessive *coupling* between objects in the system and between your objects and the framework. If you have a slow test suite and you are asking yourself "how can I make my tests faster?" then you are asking the wrong question. Most chances are that you have bigger problems than just slow tests. The test slowness is merely the symptom; what you should really address is the cause.
+If you have a slow test suite and you are asking yourself "how can I make my tests faster?" then you are asking the wrong question. Most chances are that you have bigger problems than just slow tests. The test slowness is merely the symptom; what you should really address is the cause. Once the real cause is addressed you will find that it's easy to write new fast tests and straightforward to refactor existing tests.
+
+It's surprising how quickly a rails app's test suite can become slow. It's important to understand the reason for this slowness early on and address the real cause behind it. In most cases the reason is excessive *coupling* between between the domain objects objects themselves and coupling between these objects and the framework.
 
 In this refactoring walk-through we will see how small, incremental improvements to the design of the app, and specifically, *decoupling*,  naturally lead to faster tests. We will extract service objects, completely remove all rails dependencies in test time and otherwise reduce the amount of coupling in the app.
 
@@ -197,8 +199,8 @@ How much faster is this test from a unit test that touches the database and load
 
 |               |  Single Test Runtime | Total Suite Runtime  |
 | ------------- |:-------------:| :-----:|
-| **'false' unit test**        |   0.0530s     |   2.5s |
-| **true unit test**         |   0.0005s     |   0.4s |
+| **'false' unit test**        |   0.0530s     |   2.5s
+| **true unit test**         |   0.0005s     |   0.4s
 
 A single test run is roughly **a hundred times faster**. The absolute times are rather small but the difference will be very noticeable when you have hundreds of unit tests or more. The total runtime in the "false" version takes roughly two seconds longer. This is the time it takes to load a trivial rails app on my machine. This will be significantly higher when the app grows in size and adds dependent gems.
 
@@ -215,4 +217,10 @@ This brings us closer to a lofty design goal stated by Kent Beck:
 
 >"When you can extend a system solely by adding new objects without modifying any existing objects, then you have a system that is flexible and cheap to maintain."
 
-Using mocks and dependency injection vis BDD makes sure your system is designed for this form of modularity from the get go. You know you can replace your objects with a different implementation because this is exactly what you did in your tests.
+Using mocks and dependency injection vis BDD makes sure your system is designed for this form of modularity from the get go. You know you can replace your objects with a different implementation because this is exactly what you did in your tests. Such design guarantees that you can write true, isolated and thus fast, tests.
+
+I'd like to thank the following people for providing useful feedback about this post: Frazer Horn, Steve Klabnik, Peter Marreck, Susan Pottrt and Piotr Solnica.
+
+<hr>
+
+If you found this post useful be sure to sign up for the [newsletter](http://eepurl.com/FF4ET) to get tips about how to improve your code.
