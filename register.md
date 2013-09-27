@@ -219,8 +219,8 @@ This brings us closer to a lofty design goal stated by Kent Beck:
 
 Using mocks and dependency injection with TDD makes sure your system is designed for this form of modularity from the get go. You know you can replace your objects with a different implementation because this is exactly what you did in your tests when you passed in mocks. Such design guarantees that you can write true, isolated and thus fast, tests.
 
+P.S., if you found this post useful be sure to sign up for the [newsletter](http://eepurl.com/FF4ET) to get tips about how to improve your code.
+
 <hr>
 
-I'd like to thank the following people for providing useful feedback about this post: Frazer Horn, Steve Klabnik, Peter Marreck, Susan Pottrt and Piotr Solnica.
-
-If you found this post useful be sure to sign up for the [newsletter](http://eepurl.com/FF4ET) to get tips about how to improve your code.
+I'd like to thank the following people for providing useful feedback about this post: Frazer Horn, Steve Klabnik, Peter Marreck, Susan Potter and Piotr Solnica.
