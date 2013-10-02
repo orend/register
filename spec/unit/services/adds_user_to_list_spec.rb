@@ -8,7 +8,7 @@ describe AddsUserToList do
   subject(:adds_user_to_list) { AddsUserToList }
 
   it 'registers a new user (slow version)' do
-    expect(finds_user).to receive(:find_by!).with(username: 'username').and_return(user)
+    expect(finds_user).to receive(:find_by_username!).with('username').and_return(user)
     expect(notifies_user).to receive(:call).with(user, 'list_name')
     expect(user).to receive(:add_to_mailing_list).with('list_name')
 

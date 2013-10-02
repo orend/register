@@ -5,4 +5,8 @@ class User < ActiveRecord::Base
   def add_to_mailing_list(list_name)
     update_attributes(email_list_name: list_name)
   end
+
+  def self.find_by_username!(username)
+    find_by!(username: username)
+  end
 end
