@@ -10,7 +10,7 @@ describe AddsUserToList do
   it 'registers a new user (slow version)' do
     expect(finds_user).to receive(:find_by!).with(username: 'username').and_return(user)
     expect(notifies_user).to receive(:call).with(user, 'list_name')
-    expect(user).to receive(:update_attributes).with(email_list_name: 'list_name')
+    expect(user).to receive(:add_to_mailing_list).with('list_name')
 
     adds_user_to_list.(username: 'username', email_list_name: 'list_name', finds_user: finds_user, notifies_user: notifies_user)
   end
