@@ -12,6 +12,6 @@ describe AddsUserToList do
     expect(notifies_user).to receive(:call).with(user, 'list_name')
     expect(user).to receive(:add_to_mailing_list).with('list_name')
 
-    adds_user_to_list.(username: 'username', email_list_name: 'list_name', finds_user: finds_user, notifies_user: notifies_user)
+    adds_user_to_list.(username: 'username', mailing_list_name: 'list_name', finds_user: finds_user, notifies_user: notifies_user)
   end
 end

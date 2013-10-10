@@ -9,7 +9,7 @@ describe AddsUserToList do
 
   it 'registers a new user (slow version)' do
     expect(notifies_user).to receive(:call)
-    adds_user_to_list.(username: 'username', email_list_name: 'list_name', notifies_user: notifies_user)
+    adds_user_to_list.(username: 'username', mailing_list_name: 'list_name', notifies_user: notifies_user)
   end
 
   after(:each) do
