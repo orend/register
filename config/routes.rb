@@ -8,7 +8,7 @@ Register::Application.routes.draw do
   # Example of regular route:
   #   get 'products/:id' => 'catalog#view'
 
-  put 'email_lists/add_user/:username' => 'email_lists#add_user'
+  put 'mailing_lists/add_user/:username' => 'mailing_lists#add_user'
 
   # Example of named route that can be invoked with purchase_url(id: product.id)
   #   get 'products/:id/purchase' => 'catalog#purchase', as: :purchase

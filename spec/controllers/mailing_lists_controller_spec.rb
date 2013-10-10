@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'json'
 
-describe EmailListsController, :type => :controller do
+describe MailingListsController, :type => :controller do
   it 'adds user to list' do
     user = mock_model(User)
     AddsUserToList.should_receive(:call).with(username: 'username',

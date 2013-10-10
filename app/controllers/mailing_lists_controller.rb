@@ -1,4 +1,4 @@
-class EmailListsController < ApplicationController
+class MailingListsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, :with => :record_not_found
   respond_to :json
   def add_user
