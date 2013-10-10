@@ -1,11 +1,11 @@
 require 'spec_unit_helper'
-require "./app/services/adds_user_to_list"
+require "./app/services/mailing_list"
 
-describe AddsUserToList do
+describe MailingList do
   let(:finds_user) { double('finds_user') }
   let(:notifies_user) { double('notifies_user') }
   let(:user) { double('user') }
-  subject(:adds_user_to_list) { AddsUserToList }
+  subject(:mailing_list) { MailingList }
 
   it 'registers a new user (slow version)' do
     expect(finds_user).to receive(:find_by_username!).with('username').and_return(user)
